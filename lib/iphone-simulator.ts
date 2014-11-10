@@ -1,0 +1,170 @@
+///<reference path="./.d.ts"/>
+"use strict";
+
+import child_process = require("child_process");
+import fs = require("fs");
+import Future = require("fibers/future");
+import path = require("path");
+import util = require("util");
+
+import options = require("./options");
+
+var $ = require("NodObjC");
+
+export class iPhoneSimulator implements IiPhoneSimulator {
+
+	private static FOUNDATION_FRAMEWORK_NAME = "Foundation";
+	private static APPKIT_FRAMEWORK_NAME = "AppKit";
+
+	private static DVT_FOUNDATION_RELATIVE_PATH = "../SharedFrameworks/DVTFoundation.framework";
+	private static DEV_TOOLS_FOUNDATION_RELATIVE_PATH = "../OtherFrameworks/DevToolsFoundation.framework";
+	private static CORE_SIMULATOR_RELATIVE_PATH = "Library/PrivateFrameworks/CoreSimulator.framework";
+	private static SIMULATOR_FRAMEWORK_RELATIVE_PATH_LEGACY = "Platforms/iPhoneSimulator.platform/Developer/Library/PrivateFrameworks/DVTiPhoneSimulatorRemoteClient.framework";
+	private static SIMULATOR_FRAMEWORK_RELATIVE_PATH = "../SharedFrameworks/DVTiPhoneSimulatorRemoteClient.framework";
+
+	public run(appPath: string): IFuture<void> {
+		return (() => {
+			if(!fs.existsSync(appPath)) {
+				throw new Error(util.format("Path does not exist ", appPath));
+			}
+
+			$.importFramework(iPhoneSimulator.FOUNDATION_FRAMEWORK_NAME);
+			$.importFramework(iPhoneSimulator.APPKIT_FRAMEWORK_NAME);
+
+			var pool = $.NSAutoreleasePool("alloc")("init");
+
+			var developerDirectoryPath = this.findDeveloperDirectory().wait();
+			if(!developerDirectoryPath) {
+				throw new Error("Unable to find developer directory");
+			}
+
+			this.loadFrameworks(developerDirectoryPath);
+			this.launch(developerDirectoryPath, appPath);
+
+			$.NSRunLoop("mainRunLoop")("run");
+
+			pool("release");
+		}).future<void>()();
+	}
+
+	private launch(developerDirectoryPath: string, appPath: string): void {
+		this.loadFrameworks(developerDirectoryPath);
+
+		var sessionDelegate = $.NSObject.extend("DTiPhoneSimulatorSessionDelegate");
+		sessionDelegate.addMethod("session:didEndWithError:", "v@:@@", function(self: any, sel: any, sess: any, error: any) {
+			console.log("Session ended with error: ");
+			console.log(error);
+			process.exit(1);
+		});
+		sessionDelegate.addMethod("session:didStart:withError:", "v@:@c@", function(self: any, sel: any, sess: any, did: any, err:any) {
+			if(err) {
+				console.log("Session started with error ", err);
+				process.exit(1);
+			} else {
+				console.log("Session started without errors");
+			}
+		});
+		sessionDelegate.register();
+
+		var appSpec = this.getClassByName("DTiPhoneSimulatorApplicationSpecifier")("specifierWithApplicationPath", $(appPath));
+		var config = this.getClassByName("DTiPhoneSimulatorSessionConfig")("alloc")("init")("autorelease");
+		config("setApplicationToSimulateOnStart",  appSpec);
+
+		var sdkRoot = options.sdkRoot ? $(options.sdkRoot) : this.getClassByName("DTiPhoneSimulatorSystemRoot")("defaultRoot");
+		config("setSimulatedSystemRoot", sdkRoot);
+
+		var family = 1;
+		if(options.family) {
+			if(options.family.toLowerCase() === "ipad") {
+				family = 2;
+			}
+		}
+		config("setSimulatedDeviceFamily", $.NSNumber("numberWithInt", family));
+
+		if(options.env) {
+			var env = $.NSMutableDictionary("dictionary");
+			Object.keys(env).forEach(key => {
+				env("setObject", $(env[key]), "forKey", $(key));
+			});
+
+			config("setSimulatedApplicationLaunchEnvironment", env);
+		}
+
+		config("setLocalizedClientName", $("ios-sim-portable"));
+
+		var sessionError: any = new Buffer("");
+		var time = $.NSNumber("numberWithDouble", 30);
+		var timeout = time("doubleValue");
+
+		var session = this.getClassByName("DTiPhoneSimulatorSession")("alloc")("init")("autorelease");
+		var delegate = sessionDelegate("alloc")("init");
+		session("setDelegate", delegate);
+
+		if(!session("requestStartWithConfig", config, "timeout", timeout, "error", sessionError)) {
+			throw new Error(util.format("Could not start simulator session ", sessionError));
+		}
+	}
+
+	private loadFrameworks(developerDirectoryPath: string): void {
+		this.loadFramework(path.join(developerDirectoryPath, iPhoneSimulator.DVT_FOUNDATION_RELATIVE_PATH));
+		this.loadFramework(path.join(developerDirectoryPath, iPhoneSimulator.DEV_TOOLS_FOUNDATION_RELATIVE_PATH));
+
+		if(fs.existsSync(path.join(developerDirectoryPath, iPhoneSimulator.CORE_SIMULATOR_RELATIVE_PATH))) {
+			this.loadFramework(path.join(developerDirectoryPath, iPhoneSimulator.CORE_SIMULATOR_RELATIVE_PATH));
+		}
+
+		var platformsError: string = null;
+		var dvtPlatformClass = this.getClassByName("DVTPlatform");
+		if(!dvtPlatformClass("loadAllPlatformsReturningError", platformsError)) {
+			throw new Error(util.format("Unable to loadAllPlatformsReturningError ", platformsError));
+		}
+
+		var simulatorFrameworkPath = path.join(developerDirectoryPath, iPhoneSimulator.SIMULATOR_FRAMEWORK_RELATIVE_PATH_LEGACY);
+		if(!fs.existsSync(simulatorFrameworkPath)) {
+			simulatorFrameworkPath = path.join(developerDirectoryPath, iPhoneSimulator.SIMULATOR_FRAMEWORK_RELATIVE_PATH);
+		}
+		this.loadFramework(simulatorFrameworkPath);
+	}
+
+	private loadFramework(frameworkPath: string) {
+		var bundle =  $.NSBundle("bundleWithPath", $(frameworkPath));
+		if(!bundle("load")) {
+			throw new Error(util.format("Unable to load ", frameworkPath));
+		}
+	}
+
+	private findDeveloperDirectory(): IFuture<string> {
+		var future = new Future<string>();
+		var capturedOut = "";
+		var capturedErr = "";
+
+		var childProcess = child_process.spawn("xcode-select", ["-print-path"]);
+
+		if(childProcess.stdout) {
+			childProcess.stdout.on("data", (data: string) => {
+				capturedOut +=  data;
+			});
+		}
+
+		if(childProcess.stderr) {
+			childProcess.stderr.on("data", (data: string) => {
+				capturedErr += data;
+			});
+		}
+
+		childProcess.on("close", (arg: any) => {
+			var exitCode = typeof arg == 'number' ? arg : arg && arg.code;
+			if(exitCode === 0) {
+				future.return(capturedOut ? capturedOut.trim() : null);
+			} else {
+				future.throw(util.format("Command xcode-select -print-path failed with exit code %s. Error output: \n %s", exitCode, capturedErr));
+			}
+		});
+
+		return future;
+	}
+
+	private getClassByName(className: string): any {
+		return $.classDefinition.getClassByName(className);
+	}
+}

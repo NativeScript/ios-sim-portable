@@ -1,0 +1,33 @@
+{
+  "name": "ios-sim-portable",
+  "version": "1.0.0",
+  "description": "",
+  "main": "./lib/ios-sim.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/telerik/ios-sim-portable.git"
+  },
+  "keywords": [
+    "ios",
+    "simulator"
+  ],
+  "author": "Telerik <support@telerik.com>",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/telerik/ios-sim-portable/issues"
+  },
+  "homepage": "https://github.com/telerik/ios-sim-portable",
+  "dependencies": {
+    "fibers": "https://github.com/icenium/node-fibers/tarball/master",
+    "NodObjC": "https://github.com/telerik/NodObjC/tarball/master",
+    "underscore": "1.6.0",
+    "yargs": "1.2.2"
+  },
+  "devDependencies": {
+      "grunt": "0.4.2",
+      "grunt-ts": "1.11.2"
+  }
+}
