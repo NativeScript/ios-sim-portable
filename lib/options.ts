@@ -6,6 +6,7 @@ var yargs = require("yargs");
 var knownOptions: any = {
 	"sdk": String,
 	"family": String,
+	"device": String,
 	"stdout": String,
 	"stderr": String,
 	"env": String,

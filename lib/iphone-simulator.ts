@@ -8,6 +8,9 @@ import path = require("path");
 import util = require("util");
 
 import options = require("./options");
+import utils = require("./utils");
+import xcode6SimulatorLib = require("./iphone-simulator-xcode-6");
+import xcode5SimulatorLib = require("./iphone-simulator-xcode-5");
 
 var $ = require("NodObjC");
 
@@ -52,17 +55,11 @@ export class iPhoneSimulator implements IiPhoneSimulator {
 
 		var sessionDelegate = $.NSObject.extend("DTiPhoneSimulatorSessionDelegate");
 		sessionDelegate.addMethod("session:didEndWithError:", "v@:@@", function(self: any, sel: any, sess: any, error: any) {
-			console.log("Session ended with error: ");
-			console.log(error);
-			process.exit(1);
+			iPhoneSimulator.logSessionInfo(error, "Session ended without errors.", "Session ended with error ");
+			process.exit(0);
 		});
-		sessionDelegate.addMethod("session:didStart:withError:", "v@:@c@", function(self: any, sel: any, sess: any, did: any, err:any) {
-			if(err) {
-				console.log("Session started with error ", err);
-				process.exit(1);
-			} else {
-				console.log("Session started without errors");
-			}
+		sessionDelegate.addMethod("session:didStart:withError:", "v@:@c@", function(self: any, sel: any, sess: any, did: any, error:any) {
+			iPhoneSimulator.logSessionInfo(error, "Session started without errors.", "Session started with error ");
 		});
 		sessionDelegate.register();
 
@@ -73,22 +70,15 @@ export class iPhoneSimulator implements IiPhoneSimulator {
 		var sdkRoot = options.sdkRoot ? $(options.sdkRoot) : this.getClassByName("DTiPhoneSimulatorSystemRoot")("defaultRoot");
 		config("setSimulatedSystemRoot", sdkRoot);
 
-		var family = 1;
-		if(options.family) {
-			if(options.family.toLowerCase() === "ipad") {
-				family = 2;
-			}
+		var simulator: ISimulator;
+		if(_.contains(config.methods(), "setDevice:")) {
+			simulator = new xcode6SimulatorLib.XCode6Simulator();
+		} else {
+			simulator = new xcode5SimulatorLib.XCode5Simulator();
 		}
-		config("setSimulatedDeviceFamily", $.NSNumber("numberWithInt", family));
 
-		if(options.env) {
-			var env = $.NSMutableDictionary("dictionary");
-			Object.keys(env).forEach(key => {
-				env("setObject", $(env[key]), "forKey", $(key));
-			});
-
-			config("setSimulatedApplicationLaunchEnvironment", env);
-		}
+		simulator.validateDeviceIdentifier();
+		simulator.setSimulatedDevice(config);
 
 		config("setLocalizedClientName", $("ios-sim-portable"));
 
@@ -166,5 +156,14 @@ export class iPhoneSimulator implements IiPhoneSimulator {
 
 	private getClassByName(className: string): any {
 		return $.classDefinition.getClassByName(className);
+	}
+
+	private static logSessionInfo(error: any, successfulMessage: string, errorMessage: string): void {
+		if(error) {
+			console.log(util.format("%s %s", errorMessage, error));
+			process.exit(1);
+		} else {
+			console.log(successfulMessage);
+		}
 	}
 }
