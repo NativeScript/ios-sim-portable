@@ -24,6 +24,6 @@ interface IDictionary<T> {
 }
 
 interface ISimulator {
-	validateDeviceIdentifier(): void;
+	validDeviceIdentifiers: string[];
 	setSimulatedDevice(config: any): void;
 }

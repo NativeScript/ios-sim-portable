@@ -4,8 +4,7 @@
 var yargs = require("yargs");
 
 var knownOptions: any = {
-	"sdk": String,
-	"family": String,
+	"debug": Boolean,
 	"device": String,
 	"stdout": String,
 	"stderr": String,

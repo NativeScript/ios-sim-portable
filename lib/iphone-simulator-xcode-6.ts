@@ -1,5 +1,6 @@
 ///<reference path="./.d.ts"/>
 "use strict";
+import errors = require("./errors");
 import options = require("./options");
 import utils = require("./utils");
 import util = require("util");
@@ -29,10 +30,8 @@ export class XCode6Simulator implements ISimulator {
 		this.availableDevices = Object.create(null);
 	}
 
-	public validateDeviceIdentifier(): void {
-		if(!_.contains(XCode6Simulator.allowedDeviceIdentifiers, options.device)) {
-			throw new Error(util.format("Invalid device identifier %s. Valid device identifiers are %s.", options.device, utils.stringify(XCode6Simulator.allowedDeviceIdentifiers)));
-		}
+	public get validDeviceIdentifiers(): string[] {
+		return XCode6Simulator.allowedDeviceIdentifiers;
 	}
 
 	public setSimulatedDevice(config: any): void {
@@ -76,6 +75,6 @@ export class XCode6Simulator implements ISimulator {
 			}
 		}
 
-		throw new Error(util.format("Unable to find device with identifier ", deviceIdentifier));
+		errors.fail("Unable to find device with identifier ", deviceIdentifier);
 	}
 }

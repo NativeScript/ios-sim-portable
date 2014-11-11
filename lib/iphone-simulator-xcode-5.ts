@@ -1,6 +1,7 @@
 ///<reference path="./.d.ts"/>
 "use strict";
 
+import errors = require("./errors");
 import options = require("./options");
 import utils = require("./utils");
 import util = require("util");
@@ -21,11 +22,8 @@ export class XCode5Simulator implements ISimulator {
 		"iPad-Retina-64-bit": "iPad Retina (64-bit)"
 	}
 
-	public validateDeviceIdentifier(): void {
-		var identifiers: string[] =  _.keys(XCode5Simulator.allowedDeviceIdentifiers);
-		if(!_.contains(identifiers, options.device)) {
-			throw new Error(util.format("Invalid device identifier %s. Valid device identifiers are %s.", options.device, utils.stringify(identifiers)));
-		}
+	public get validDeviceIdentifiers(): string[] {
+		return _.keys(XCode5Simulator.allowedDeviceIdentifiers);
 	}
 
 	public setSimulatedDevice(config:any): void {

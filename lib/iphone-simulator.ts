@@ -7,6 +7,7 @@ import Future = require("fibers/future");
 import path = require("path");
 import util = require("util");
 
+import errors = require("./errors");
 import options = require("./options");
 import utils = require("./utils");
 import xcode6SimulatorLib = require("./iphone-simulator-xcode-6");
@@ -28,7 +29,7 @@ export class iPhoneSimulator implements IiPhoneSimulator {
 	public run(appPath: string): IFuture<void> {
 		return (() => {
 			if(!fs.existsSync(appPath)) {
-				throw new Error(util.format("Path does not exist ", appPath));
+				errors.fail("Path does not exist ", appPath);
 			}
 
 			$.importFramework(iPhoneSimulator.FOUNDATION_FRAMEWORK_NAME);
@@ -38,7 +39,7 @@ export class iPhoneSimulator implements IiPhoneSimulator {
 
 			var developerDirectoryPath = this.findDeveloperDirectory().wait();
 			if(!developerDirectoryPath) {
-				throw new Error("Unable to find developer directory");
+				errors.fail("Unable to find developer directory");
 			}
 
 			this.loadFrameworks(developerDirectoryPath);
@@ -78,7 +79,10 @@ export class iPhoneSimulator implements IiPhoneSimulator {
 		}
 
 		if(options.device) {
-			simulator.validateDeviceIdentifier();
+			var validDeviceIdentifiers = simulator.validDeviceIdentifiers;
+			if(!_.contains(validDeviceIdentifiers, options.device)) {
+				errors.fail("Invalid device identifier %s. Valid device identifiers are %s.", options.device, utils.stringify(validDeviceIdentifiers));
+			}
 		}
 		simulator.setSimulatedDevice(config);
 
@@ -93,7 +97,7 @@ export class iPhoneSimulator implements IiPhoneSimulator {
 		session("setDelegate", delegate);
 
 		if(!session("requestStartWithConfig", config, "timeout", timeout, "error", sessionError)) {
-			throw new Error(util.format("Could not start simulator session ", sessionError));
+			errors.fail("Could not start simulator session ", sessionError);
 		}
 	}
 
@@ -108,7 +112,7 @@ export class iPhoneSimulator implements IiPhoneSimulator {
 		var platformsError: string = null;
 		var dvtPlatformClass = this.getClassByName("DVTPlatform");
 		if(!dvtPlatformClass("loadAllPlatformsReturningError", platformsError)) {
-			throw new Error(util.format("Unable to loadAllPlatformsReturningError ", platformsError));
+			errors.fail("Unable to loadAllPlatformsReturningError ", platformsError);
 		}
 
 		var simulatorFrameworkPath = path.join(developerDirectoryPath, iPhoneSimulator.SIMULATOR_FRAMEWORK_RELATIVE_PATH_LEGACY);
@@ -121,7 +125,7 @@ export class iPhoneSimulator implements IiPhoneSimulator {
 	private loadFramework(frameworkPath: string) {
 		var bundle =  $.NSBundle("bundleWithPath", $(frameworkPath));
 		if(!bundle("load")) {
-			throw new Error(util.format("Unable to load ", frameworkPath));
+			errors.fail("Unable to load ", frameworkPath);
 		}
 	}
 

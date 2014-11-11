@@ -10,6 +10,7 @@ import commandExecutorLibPath = require("./command-executor");
 var fiber = Fiber(() => {
 	var commandExecutor: ICommandExecutor = new commandExecutorLibPath.CommandExecutor();
 	commandExecutor.execute().wait();
+	Future.assertNoFutureLeftBehind();
 });
 
 fiber.run();
