@@ -77,7 +77,9 @@ export class iPhoneSimulator implements IiPhoneSimulator {
 			simulator = new xcode5SimulatorLib.XCode5Simulator();
 		}
 
-		simulator.validateDeviceIdentifier();
+		if(options.device) {
+			simulator.validateDeviceIdentifier();
+		}
 		simulator.setSimulatedDevice(config);
 
 		config("setLocalizedClientName", $("ios-sim-portable"));

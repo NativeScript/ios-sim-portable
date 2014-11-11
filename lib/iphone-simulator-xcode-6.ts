@@ -30,8 +30,8 @@ export class XCode6Simulator implements ISimulator {
 	}
 
 	public validateDeviceIdentifier(): void {
-		if(!_.contains(XCode6Simulator.allowedDeviceIdentifiers, this.deviceIdentifier)) {
-			throw new Error(util.format("Invalid device identifier %s. Valid device identifiers are %s.", this.deviceIdentifier, utils.stringify(XCode6Simulator.allowedDeviceIdentifiers)));
+		if(!_.contains(XCode6Simulator.allowedDeviceIdentifiers, options.device)) {
+			throw new Error(util.format("Invalid device identifier %s. Valid device identifiers are %s.", options.device, utils.stringify(XCode6Simulator.allowedDeviceIdentifiers)));
 		}
 	}
 
