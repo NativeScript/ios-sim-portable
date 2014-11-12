@@ -9,7 +9,7 @@ var $ = require("NodObjC");
 export class XCode6Simulator implements ISimulator {
 
 	private static DEVICE_IDENTIFIER_PREFIX = "com.apple.CoreSimulator.SimDeviceType";
-	private static DEFAULT_DEVICE_IDENTIFIER = "Resizable-iPad";
+	private static DEFAULT_DEVICE_IDENTIFIER = "iPhone-4s";
 
 	private static allowedDeviceIdentifiers = [
 		"iPhone-4s",
@@ -44,7 +44,7 @@ export class XCode6Simulator implements ISimulator {
 	}
 
 	private getAvailableDevices(): IDictionary<IDevice> {
-		if(utils.isEmptyDictionary(this.availableDevices)) {
+		if(_.isEmpty(this.availableDevices)) {
 			var deviceSet = $.classDefinition.getClassByName("SimDeviceSet")("defaultSet");
 			var devices = deviceSet("availableDevices");
 			var count = devices("count");
@@ -68,10 +68,10 @@ export class XCode6Simulator implements ISimulator {
 	private getDeviceByIdentifier(deviceIdentifier: string): any {
 		var fullDeviceIdentifier = util.format("%s.%s", XCode6Simulator.DEVICE_IDENTIFIER_PREFIX, deviceIdentifier);
 		var availableDevices = this.getAvailableDevices();
-		if(!utils.isEmptyDictionary(availableDevices)) {
-			var device = availableDevices[fullDeviceIdentifier];
-			if(device) {
-				return device.device;
+		if(!_.isEmpty(availableDevices)) {
+			var selectedDevice = availableDevices[fullDeviceIdentifier];
+			if(selectedDevice) {
+				return selectedDevice.device;
 			}
 		}
 

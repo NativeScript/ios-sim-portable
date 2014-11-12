@@ -3,6 +3,7 @@
 
 interface IiPhoneSimulator {
 	run(appName: string): IFuture<void>;
+	printDeviceTypes(): void;
 }
 
 interface ICommand {
@@ -26,4 +27,9 @@ interface IDictionary<T> {
 interface ISimulator {
 	validDeviceIdentifiers: string[];
 	setSimulatedDevice(config: any): void;
+}
+
+interface IExecuteOptions {
+	canRunMainLoop: boolean;
+	appPath?: string;
 }

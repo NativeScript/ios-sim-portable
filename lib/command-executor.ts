@@ -11,12 +11,10 @@ import options = require("./options");
 export class CommandExecutor implements ICommandExecutor {
 
 	public execute(): IFuture<void> {
-		return (() => {
-			var commandName = this.getCommandName();
-			var commandArguments = this.getCommandArguments();
+		var commandName = this.getCommandName();
+		var commandArguments = this.getCommandArguments();
 
-			this.executeCore(commandName, commandArguments).wait();
-		}).future<void>()();
+		return this.executeCore(commandName, commandArguments);
 	}
 
 	private executeCore(commandName: string, commandArguments: string[]): IFuture<void> {
