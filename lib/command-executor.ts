@@ -1,7 +1,11 @@
 ///<reference path="./.d.ts"/>
 "use strict";
 
+import Future = require("fibers/future");
 import util = require("util");
+require("colors");
+
+import errors = require("./errors");
 import options = require("./options");
 
 export class CommandExecutor implements ICommandExecutor {
@@ -14,12 +18,22 @@ export class CommandExecutor implements ICommandExecutor {
 	}
 
 	private executeCore(commandName: string, commandArguments: string[]): IFuture<void> {
-		var command = new (require("./commands/" + commandName).Command)();
-		if(!command) {
-			throw new Error(util.format("Unable to resolve commandName %s", commandName));
-		}
+		return (() => {
+			var command: ICommand = new (require("./commands/" + commandName).Command)();
+			if(!command) {
+				errors.fail("Unable to resolve commandName %s", commandName);
+			}
 
-		return command.execute(commandArguments);
+			try {
+				command.execute(commandArguments).wait();
+			} catch(e) {
+				if(options.debug) {
+					throw e;
+				} else {
+					console.log( "\x1B[31;1m" + e.message + "\x1B[0m");
+				}
+			}
+		}).future<void>()();
 	}
 
 	private getCommandArguments(): string[] {

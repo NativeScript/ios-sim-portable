@@ -7,7 +7,11 @@ import Future = require("fibers/future");
 import path = require("path");
 import util = require("util");
 
+import errors = require("./errors");
 import options = require("./options");
+import utils = require("./utils");
+import xcode6SimulatorLib = require("./iphone-simulator-xcode-6");
+import xcode5SimulatorLib = require("./iphone-simulator-xcode-5");
 
 var $ = require("NodObjC");
 
@@ -23,11 +27,25 @@ export class iPhoneSimulator implements IiPhoneSimulator {
 	private static SIMULATOR_FRAMEWORK_RELATIVE_PATH = "../SharedFrameworks/DVTiPhoneSimulatorRemoteClient.framework";
 
 	public run(appPath: string): IFuture<void> {
-		return (() => {
-			if(!fs.existsSync(appPath)) {
-				throw new Error(util.format("Path does not exist ", appPath));
-			}
+		if(!fs.existsSync(appPath)) {
+			errors.fail("Path does not exist ", appPath);
+		}
 
+		return this.execute(this.launch, { canRunMainLoop: true, appPath: appPath});
+	}
+
+	public printDeviceTypes(): IFuture<void> {
+
+		var action = () => {
+			var simulator = this.createSimulator();
+			_.each(simulator.validDeviceIdentifiers, (identifier: any) => console.log(identifier));
+		}
+
+		return this.execute(action, { canRunMainLoop: false });
+	}
+
+	private execute(action: (appPath?: string) => any, opts: IExecuteOptions): IFuture<void> {
+		return (() => {
 			$.importFramework(iPhoneSimulator.FOUNDATION_FRAMEWORK_NAME);
 			$.importFramework(iPhoneSimulator.APPKIT_FRAMEWORK_NAME);
 
@@ -35,34 +53,29 @@ export class iPhoneSimulator implements IiPhoneSimulator {
 
 			var developerDirectoryPath = this.findDeveloperDirectory().wait();
 			if(!developerDirectoryPath) {
-				throw new Error("Unable to find developer directory");
+				errors.fail("Unable to find developer directory");
 			}
 
 			this.loadFrameworks(developerDirectoryPath);
-			this.launch(developerDirectoryPath, appPath);
 
-			$.NSRunLoop("mainRunLoop")("run");
+			action.apply(this, [opts.appPath]);
+
+			if(opts.canRunMainLoop) {
+				$.NSRunLoop("mainRunLoop")("run");
+			}
 
 			pool("release");
 		}).future<void>()();
 	}
 
-	private launch(developerDirectoryPath: string, appPath: string): void {
-		this.loadFrameworks(developerDirectoryPath);
-
+	private launch(appPath: string): void {
 		var sessionDelegate = $.NSObject.extend("DTiPhoneSimulatorSessionDelegate");
 		sessionDelegate.addMethod("session:didEndWithError:", "v@:@@", function(self: any, sel: any, sess: any, error: any) {
-			console.log("Session ended with error: ");
-			console.log(error);
-			process.exit(1);
+			iPhoneSimulator.logSessionInfo(error, "Session ended without errors.", "Session ended with error ");
+			process.exit(0);
 		});
-		sessionDelegate.addMethod("session:didStart:withError:", "v@:@c@", function(self: any, sel: any, sess: any, did: any, err:any) {
-			if(err) {
-				console.log("Session started with error ", err);
-				process.exit(1);
-			} else {
-				console.log("Session started without errors");
-			}
+		sessionDelegate.addMethod("session:didStart:withError:", "v@:@c@", function(self: any, sel: any, sess: any, did: any, error:any) {
+			iPhoneSimulator.logSessionInfo(error, "Session started without errors.", "Session started with error ");
 		});
 		sessionDelegate.register();
 
@@ -73,22 +86,14 @@ export class iPhoneSimulator implements IiPhoneSimulator {
 		var sdkRoot = options.sdkRoot ? $(options.sdkRoot) : this.getClassByName("DTiPhoneSimulatorSystemRoot")("defaultRoot");
 		config("setSimulatedSystemRoot", sdkRoot);
 
-		var family = 1;
-		if(options.family) {
-			if(options.family.toLowerCase() === "ipad") {
-				family = 2;
+		var simulator = this.createSimulator(config);
+		if(options.device) {
+			var validDeviceIdentifiers = simulator.validDeviceIdentifiers;
+			if(!_.contains(validDeviceIdentifiers, options.device)) {
+				errors.fail("Invalid device identifier %s. Valid device identifiers are %s.", options.device, utils.stringify(validDeviceIdentifiers));
 			}
 		}
-		config("setSimulatedDeviceFamily", $.NSNumber("numberWithInt", family));
-
-		if(options.env) {
-			var env = $.NSMutableDictionary("dictionary");
-			Object.keys(env).forEach(key => {
-				env("setObject", $(env[key]), "forKey", $(key));
-			});
-
-			config("setSimulatedApplicationLaunchEnvironment", env);
-		}
+		simulator.setSimulatedDevice(config);
 
 		config("setLocalizedClientName", $("ios-sim-portable"));
 
@@ -101,7 +106,7 @@ export class iPhoneSimulator implements IiPhoneSimulator {
 		session("setDelegate", delegate);
 
 		if(!session("requestStartWithConfig", config, "timeout", timeout, "error", sessionError)) {
-			throw new Error(util.format("Could not start simulator session ", sessionError));
+			errors.fail("Could not start simulator session ", sessionError);
 		}
 	}
 
@@ -116,7 +121,7 @@ export class iPhoneSimulator implements IiPhoneSimulator {
 		var platformsError: string = null;
 		var dvtPlatformClass = this.getClassByName("DVTPlatform");
 		if(!dvtPlatformClass("loadAllPlatformsReturningError", platformsError)) {
-			throw new Error(util.format("Unable to loadAllPlatformsReturningError ", platformsError));
+			errors.fail("Unable to loadAllPlatformsReturningError ", platformsError);
 		}
 
 		var simulatorFrameworkPath = path.join(developerDirectoryPath, iPhoneSimulator.SIMULATOR_FRAMEWORK_RELATIVE_PATH_LEGACY);
@@ -129,7 +134,7 @@ export class iPhoneSimulator implements IiPhoneSimulator {
 	private loadFramework(frameworkPath: string) {
 		var bundle =  $.NSBundle("bundleWithPath", $(frameworkPath));
 		if(!bundle("load")) {
-			throw new Error(util.format("Unable to load ", frameworkPath));
+			errors.fail("Unable to load ", frameworkPath);
 		}
 	}
 
@@ -166,5 +171,29 @@ export class iPhoneSimulator implements IiPhoneSimulator {
 
 	private getClassByName(className: string): any {
 		return $.classDefinition.getClassByName(className);
+	}
+
+	private static logSessionInfo(error: any, successfulMessage: string, errorMessage: string): void {
+		if(error) {
+			console.log(util.format("%s %s", errorMessage, error));
+			process.exit(1);
+		}
+
+		console.log(successfulMessage);
+	}
+
+	private createSimulator(config?: any): ISimulator {
+		if(!config) {
+			config = this.getClassByName("DTiPhoneSimulatorSessionConfig")("alloc")("init")("autorelease");
+		}
+
+		var simulator: ISimulator;
+		if(_.contains(config.methods(), "setDevice:")) {
+			simulator = new xcode6SimulatorLib.XCode6Simulator();
+		} else {
+			simulator = new xcode5SimulatorLib.XCode5Simulator();
+		}
+
+		return simulator;
 	}
 }
