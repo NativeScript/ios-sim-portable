@@ -3,7 +3,8 @@
 
 interface IiPhoneSimulator {
 	run(appName: string): IFuture<void>;
-	printDeviceTypes(): void;
+	printDeviceTypes(): IFuture<void>;
+	printSDKS(): IFuture<void>;
 }
 
 interface ICommand {
@@ -32,4 +33,11 @@ interface ISimulator {
 interface IExecuteOptions {
 	canRunMainLoop: boolean;
 	appPath?: string;
+}
+
+interface ISdk {
+	displayName: string;
+	version: string;
+	rootPath: string;
+	sdkInfo(): string;
 }
