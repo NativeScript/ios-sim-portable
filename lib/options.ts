@@ -5,6 +5,7 @@ var yargs = require("yargs");
 
 var knownOptions: any = {
 	"debug": Boolean,
+	"exit": Boolean,
 	"device": String,
 	"stdout": String,
 	"stderr": String,

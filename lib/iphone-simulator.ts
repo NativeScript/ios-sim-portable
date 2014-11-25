@@ -74,8 +74,11 @@ export class iPhoneSimulator implements IiPhoneSimulator {
 			iPhoneSimulator.logSessionInfo(error, "Session ended without errors.", "Session ended with error ");
 			process.exit(0);
 		});
-		sessionDelegate.addMethod("session:didStart:withError:", "v@:@c@", function(self: any, sel: any, sess: any, did: any, error:any) {
+		sessionDelegate.addMethod("session:didStart:withError:", "v@:@c@", function(self: any, sel: string, session: any, started: boolean, error:any) {
 			iPhoneSimulator.logSessionInfo(error, "Session started without errors.", "Session started with error ");
+			if(options.exit) {
+				process.exit(0);
+			}
 		});
 		sessionDelegate.register();
 
@@ -94,6 +97,14 @@ export class iPhoneSimulator implements IiPhoneSimulator {
 			}
 		}
 		simulator.setSimulatedDevice(config);
+
+		if(options.stderr) {
+			config("setSimulatedApplicationStdErrPath", $(options.stderr));
+		}
+
+		if(options.stdout) {
+			config("setSimulatedApplicationStdOutPath", $(options.stdout));
+		}
 
 		config("setLocalizedClientName", $("ios-sim-portable"));
 
