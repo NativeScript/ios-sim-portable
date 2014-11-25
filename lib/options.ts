@@ -10,7 +10,8 @@ var knownOptions: any = {
 	"stdout": String,
 	"stderr": String,
 	"env": String,
-	"args": String
+	"args": String,
+	"help": Boolean
 };
 
 var parsed = {};

@@ -19,12 +19,12 @@ export class CommandExecutor implements ICommandExecutor {
 
 	private executeCore(commandName: string, commandArguments: string[]): IFuture<void> {
 		return (() => {
-			var command: ICommand = new (require("./commands/" + commandName).Command)();
-			if(!command) {
-				errors.fail("Unable to resolve commandName %s", commandName);
-			}
-
 			try {
+				var command: ICommand = new (require("./commands/" + commandName).Command)();
+				if(!command) {
+					errors.fail("Unable to resolve commandName %s", commandName);
+				}
+
 				command.execute(commandArguments).wait();
 			} catch(e) {
 				if(options.debug) {

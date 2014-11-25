@@ -1,0 +1,56 @@
+--[]--
+
+Usage:
+    $ ios-sim-portable <command> [command parameters] [--command <options>]
+
+General commands:
+    help <command>       Shows additional information about the commands in this list.
+    launch <App path>    Launch the application at the specified path on the iOS Simulator.
+    device-types         Lists the available device types for current Xcode version.
+    sdks                 Lists the available iOS sdk versions.
+
+General options:
+    --help               Prints help about the selected command.
+
+--[/]--
+
+--[help]--
+
+Usage:
+    $ ios-sim-portable help [<Command>]
+
+Lists the available commands or shows information about the selected command.
+<Command> is any of the available commands as listed by $ ios-sim-portable help.
+
+--[/]--
+
+--[launch]--
+
+Usage:
+    $ ios-sim-portable launch <App path> [--exit]
+
+Launch the application at the specified path on iOS Simulator.
+<App path> - Specifies the path to application(.app file) that you want to run in iOS Simulator.
+
+Options:
+    --exit - If this option is specified, the process is exited after the iOS Simulator is started.
+
+--[/]--
+
+--[device-types]--
+
+Usage:
+    $ ios-sim-portable device-types
+
+Lists the available device types for current XCode version
+
+--[/]--
+
+--[sdks]--
+
+Usage:
+    $ ios-sim-portable sdks
+
+Lists the available iOS sdk versions.
+
+--[/]--
