@@ -5,11 +5,13 @@ var yargs = require("yargs");
 
 var knownOptions: any = {
 	"debug": Boolean,
+	"exit": Boolean,
 	"device": String,
 	"stdout": String,
 	"stderr": String,
 	"env": String,
-	"args": String
+	"args": String,
+	"help": Boolean
 };
 
 var parsed = {};

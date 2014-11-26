@@ -4,6 +4,7 @@
 import child_process = require("child_process");
 import fs = require("fs");
 import Future = require("fibers/future");
+import os = require("os");
 import path = require("path");
 import util = require("util");
 
@@ -35,11 +36,34 @@ export class iPhoneSimulator implements IiPhoneSimulator {
 	}
 
 	public printDeviceTypes(): IFuture<void> {
-
 		var action = () => {
 			var simulator = this.createSimulator();
 			_.each(simulator.validDeviceIdentifiers, (identifier: any) => console.log(identifier));
 		}
+
+		return this.execute(action, { canRunMainLoop: false });
+	}
+
+	public printSDKS(): IFuture<void> {
+		var action = () => {
+			var systemRootClass = this.getClassByName("DTiPhoneSimulatorSystemRoot");
+			var roots = systemRootClass("knownRoots");
+			var count = roots("count");
+
+			var sdks: ISdk[] = [];
+			for(var index=0; index < count; index++) {
+				var root = roots("objectAtIndex", index);
+
+				var displayName = root("sdkDisplayName").toString();
+				var version = root("sdkVersion").toString();
+				var rootPath = root("sdkRootPath").toString();
+
+				sdks.push(new Sdk(displayName, version, rootPath));
+			}
+
+			sdks = _.sortBy(sdks, (sdk: ISdk) => sdk.version);
+			_.each(sdks, (sdk: ISdk) => console.log(sdk.sdkInfo() + os.EOL));
+		};
 
 		return this.execute(action, { canRunMainLoop: false });
 	}
@@ -74,8 +98,11 @@ export class iPhoneSimulator implements IiPhoneSimulator {
 			iPhoneSimulator.logSessionInfo(error, "Session ended without errors.", "Session ended with error ");
 			process.exit(0);
 		});
-		sessionDelegate.addMethod("session:didStart:withError:", "v@:@c@", function(self: any, sel: any, sess: any, did: any, error:any) {
+		sessionDelegate.addMethod("session:didStart:withError:", "v@:@c@", function(self: any, sel: string, session: any, started: boolean, error:any) {
 			iPhoneSimulator.logSessionInfo(error, "Session started without errors.", "Session started with error ");
+			if(options.exit) {
+				process.exit(0);
+			}
 		});
 		sessionDelegate.register();
 
@@ -94,6 +121,14 @@ export class iPhoneSimulator implements IiPhoneSimulator {
 			}
 		}
 		simulator.setSimulatedDevice(config);
+
+		if(options.stderr) {
+			config("setSimulatedApplicationStdErrPath", $(options.stderr));
+		}
+
+		if(options.stdout) {
+			config("setSimulatedApplicationStdOutPath", $(options.stdout));
+		}
 
 		config("setLocalizedClientName", $("ios-sim-portable"));
 
@@ -195,5 +230,17 @@ export class iPhoneSimulator implements IiPhoneSimulator {
 		}
 
 		return simulator;
+	}
+}
+
+class Sdk implements ISdk {
+	constructor(public displayName: string,
+		public version: string,
+		public rootPath: string) { }
+
+	public sdkInfo(): string {
+		return [util.format("    Display Name: %s", this.displayName),
+			util.format("    Version: %s", this.version),
+			util.format("    Root path: %s", this.rootPath)].join(os.EOL);
 	}
 }
