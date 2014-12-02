@@ -1,2 +1,4 @@
-#!/usr/bin/env node
-require("../lib/ios-sim.js");
+#!/bin/sh
+
+SIM_DIR="`dirname \"$0\"`"
+node "$SIM_DIR/appbuilder.js" $@
