@@ -6,7 +6,7 @@ Usage:
 
 General commands:
     help <command>       Shows additional information about the commands in this list.
-    launch <full path>        Launches the application at the specified path in the iOS Simulator.
+    launch <full path>   Launches the application at the specified path in the iOS Simulator.
     device-types         Lists the available device types for the current Xcode version.
     sdks                 Lists the available iOS SDK versions.
 
