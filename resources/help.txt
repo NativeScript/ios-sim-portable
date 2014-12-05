@@ -2,11 +2,12 @@
 
 Usage:
     $ ios-sim-portable <command> [command parameters] [--command <options>]
+    $ isim <command> [command parameters] [--command <options>]
 
 General commands:
     help <command>       Shows additional information about the commands in this list.
-    launch <path>        Launches the application at the specified path in the iOS Simulator.
-    device-types         Lists the available device types for the current XCode version.
+    launch <full path>        Launches the application at the specified path in the iOS Simulator.
+    device-types         Lists the available device types for the current Xcode version.
     sdks                 Lists the available iOS SDK versions.
 
 General options:
@@ -18,6 +19,7 @@ General options:
 
 Usage:
     $ ios-sim-portable help [<Command>]
+    $ isim help [<Command>]
 
 Lists the available commands or shows information about the selected command.
 <Command> is any of the available commands as listed by $ ios-sim-portable help.
@@ -27,13 +29,16 @@ Lists the available commands or shows information about the selected command.
 --[launch]--
 
 Usage:
-    $ ios-sim-portable launch <Path> [--exit]
+    $ ios-sim-portable launch <Full Path> [--exit] [--device <Name>]
+    $ isim launch <Full Path> [--exit] [--device <Name>]
 
 Launches the application located at the specified path in the iOS Simulator.
-<Path> is the file path to the application file (.app) that you want to load in the iOS Simulator.
+<Full Path> is the absolute file path to the application file (.app) that you want to load in the iOS Simulator.
+<Name> is the name of an available device as listed by $ ios-sim-portable device-types.
 
 Options:
     --exit - If set, releases the console after the iOS Simulator starts.
+    --device - If set, launches the app in the selected device. Otherwise, launches the app in the default device.
 
 --[/]--
 
@@ -42,7 +47,7 @@ Options:
 Usage:
     $ ios-sim-portable device-types
 
-Lists the available device types for the current XCode version.
+Lists the available device types for the current Xcode version.
 
 --[/]--
 
