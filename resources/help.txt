@@ -46,6 +46,7 @@ Options:
 
 Usage:
     $ ios-sim-portable device-types
+    $ isim device-types
 
 Lists the available device types for the current Xcode version.
 
@@ -55,6 +56,7 @@ Lists the available device types for the current Xcode version.
 
 Usage:
     $ ios-sim-portable sdks
+    $ isim sdks
 
 Lists the available iOS SDK versions.
 
