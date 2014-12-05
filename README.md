@@ -7,7 +7,7 @@ The ios-sim-portable is a command-line utility written in Node.js that launches 
 * [Installation](#installation)
 * [Usage](#usage)
 * [License](#license)
-* [Related Packages](#related-packages)
+* [Related npm Packages](#related-npm-packages)
 
 System Requirements
 ===================
