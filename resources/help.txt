@@ -6,7 +6,7 @@ Usage:
 
 General commands:
     help <command>       Shows additional information about the commands in this list.
-    launch <full path>   Launches the application at the specified path in the iOS Simulator.
+    launch <full path>   Launches the application bundle (.app) at the specified path in the iOS Simulator.
     device-types         Lists the available device types for the current Xcode version.
     sdks                 Lists the available iOS SDK versions.
 
@@ -32,8 +32,8 @@ Usage:
     $ ios-sim-portable launch <Full Path> [--exit] [--device <Name>]
     $ isim launch <Full Path> [--exit] [--device <Name>]
 
-Launches the application located at the specified path in the iOS Simulator.
-<Full Path> is the absolute file path to the application file (.app) that you want to load in the iOS Simulator.
+Launches the application bundle (.app) located at the specified path in the iOS Simulator.
+<Full Path> is the absolute file path to the application bundle (.app) that you want to load in the iOS Simulator.
 <Name> is the name of an available device as listed by $ ios-sim-portable device-types.
 
 Options:

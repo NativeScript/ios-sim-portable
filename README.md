@@ -1,7 +1,7 @@
 ios-sim-portable
 ================
 
-The ios-sim-portable is a command-line utility written in Node.js that launches an iOS application file (.app) in the Xcode iOS Simulator.
+The ios-sim-portable is a command-line utility written in Node.js that launches an [iOS application bundle (.app)][5] in the Xcode [iOS Simulator][4].
 
 * [System Requirements](#system-requirements)
 * [Installation](#installation)
@@ -52,7 +52,7 @@ $ isim <command> [command parameters] [--command <options>]
 
 General commands:
 	help <command>       Shows additional information about the commands in this list.
-	launch <full path>   Launches the application at the specified path in the iOS Simulator.
+	launch <full path>   Launches the application bundle at the specified path in the iOS Simulator.
 	device-types         Lists the available device types for the current Xcode version.
 	sdks                 Lists the available iOS SDK versions.
 
@@ -86,3 +86,5 @@ The [NativeScript CLI][3] lets you create, build, and deploy Telerik NativeScrip
 [1]: #ios-sim-portable
 [2]: https://www.npmjs.org/package/appbuilder
 [3]: https://www.npmjs.org/package/nativescript
+[4]: https://developer.apple.com/library/ios/documentation/IDEs/Conceptual/iOS_Simulator_Guide/Introduction/Introduction.html
+[5]: https://developer.apple.com/library/ios/documentation/CoreFoundation/Conceptual/CFBundles/AboutBundles/AboutBundles.html#//apple_ref/doc/uid/10000123i-CH100-SW1
