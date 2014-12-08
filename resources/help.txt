@@ -1,8 +1,8 @@
 --[]--
 
 Usage:
-    $ ios-sim-portable <command> [command parameters] [--command <options>]
-    $ isim <command> [command parameters] [--command <options>]
+    $ ios-sim-portable <command> [parameters] [--options <values>]
+    $ isim <command> [parameters] [--options <values>]
 
 General commands:
     help <command>       Shows additional information about the commands in this list.

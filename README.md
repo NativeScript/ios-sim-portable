@@ -13,7 +13,7 @@ System Requirements
 ===================
 
 * OS X 10.9.4 or later
-* Node.js 0.10.31 or later
+* Node.js 0.10.26 or later
 * Xcode 5.0 or later
 * Command Line Tools for Xcode, compatible with your versions of Xcode and OS X
 * iOS 7.0 SDK or later 
@@ -47,8 +47,8 @@ Usage
 =====
 
 ```bash
-$ ios-sim-portable <command> [command parameters] [--command <options>]
-$ isim <command> [command parameters] [--command <options>]
+$ ios-sim-portable <command> [parameters] [--options <values>]
+$ isim <command> [parameters] [--options <values>]
 
 General commands:
 	help <command>       Shows additional information about the commands in this list.
