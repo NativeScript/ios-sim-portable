@@ -4,6 +4,7 @@ import errors = require("./errors");
 import options = require("./options");
 import utils = require("./utils");
 import util = require("util");
+import os = require("os");
 var $ = require("NodObjC");
 
 export class XCode6Simulator implements ISimulator {
@@ -11,18 +12,6 @@ export class XCode6Simulator implements ISimulator {
 	private static DEVICE_IDENTIFIER_PREFIX = "com.apple.CoreSimulator.SimDeviceType";
 	private static DEFAULT_DEVICE_IDENTIFIER = "iPhone-4s";
 
-	private static allowedDeviceIdentifiers = [
-		"iPhone-4s",
-		"iPhone-5",
-		"iPhone-5s",
-		"iPhone-6",
-		"iPhone-6-Plus",
-		"Resizable-iPhone",
-		"iPad-2",
-		"iPad-Retina",
-		"iPad-Air",
-		"Resizable-iPad"
-	];
 
 	private availableDevices: IDictionary<IDevice>;
 
@@ -31,7 +20,29 @@ export class XCode6Simulator implements ISimulator {
 	}
 
 	public get validDeviceIdentifiers(): string[] {
-		return XCode6Simulator.allowedDeviceIdentifiers;
+		var simDeviceSet = $.classDefinition.getClassByName("SimDeviceSet");
+		var devicesInfo: string[] = [];
+
+		if(simDeviceSet) {
+			var deviceSet = simDeviceSet("defaultSet");
+			var devices = deviceSet("availableDevices");
+
+			var count = devices("count");
+			for(var index=0; index < count; index++) {
+				var device = devices("objectAtIndex", index);
+
+				var deviceIdentifier = device("deviceType")("identifier").toString();
+				var deviceIdentifierPrefixIndex = deviceIdentifier.indexOf(XCode6Simulator.DEFAULT_DEVICE_IDENTIFIER);
+				var deviceIdentifierWithoutPrefix = deviceIdentifier.substring(deviceIdentifierPrefixIndex + XCode6Simulator.DEVICE_IDENTIFIER_PREFIX.length + 2);
+
+				var runtimeVersion = device("runtime")("versionString").toString();
+				var deviceInfo = [util.format("Device Identifier: %s", deviceIdentifierWithoutPrefix),
+					util.format("Runtime Version: %s", runtimeVersion)].join(os.EOL);
+				devicesInfo.push(deviceInfo + os.EOL);
+			}
+		}
+
+		return devicesInfo;
 	}
 
 	public setSimulatedDevice(config: any): void {
