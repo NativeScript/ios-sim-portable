@@ -8,7 +8,8 @@
     "prepublish": "node prepublish.js"
   },
   "bin": {
-     "ios-sim-portable": "./bin/ios-sim-portable.js"
+     "ios-sim-portable": "./bin/ios-sim-portable.js",
+     "isim": "./bin/ios-sim-portable.js"
   },
   "repository": {
     "type": "git",
