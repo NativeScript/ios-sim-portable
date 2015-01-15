@@ -27,7 +27,7 @@
   "homepage": "https://github.com/telerik/ios-sim-portable",
   "dependencies": {
     "colors": "0.6.2",
-    "fibers": "https://github.com/icenium/node-fibers/tarball/master",
+    "fibers": "https://github.com/icenium/node-fibers/tarball/vladimirov/fibers_1_0_5_fixes",
     "NodObjC": "https://github.com/telerik/NodObjC/tarball/master",
     "underscore": "1.6.0",
     "yargs": "1.2.2"
