@@ -27,6 +27,8 @@ export class iPhoneSimulator implements IiPhoneSimulator {
 	private static SIMULATOR_FRAMEWORK_RELATIVE_PATH_LEGACY = "Platforms/iPhoneSimulator.platform/Developer/Library/PrivateFrameworks/DVTiPhoneSimulatorRemoteClient.framework";
 	private static SIMULATOR_FRAMEWORK_RELATIVE_PATH = "../SharedFrameworks/DVTiPhoneSimulatorRemoteClient.framework";
 
+	private static DEFAULT_TIMEOUT_IN_SECONDS = 90;
+
 	public run(appPath: string): IFuture<void> {
 		if(!fs.existsSync(appPath)) {
 			errors.fail("Path does not exist ", appPath);
@@ -133,7 +135,18 @@ export class iPhoneSimulator implements IiPhoneSimulator {
 		config("setLocalizedClientName", $("ios-sim-portable"));
 
 		var sessionError: any = new Buffer("");
-		var time = $.NSNumber("numberWithDouble", 30);
+		var timeoutParam = iPhoneSimulator.DEFAULT_TIMEOUT_IN_SECONDS;
+		if (options.timeout || options.timeout === 0) {
+			var parsedValue = parseInt(options.timeout);
+			if(!isNaN(parsedValue) && parsedValue > 0) {
+				timeoutParam = parsedValue;
+			}
+			else {
+				console.log(util.format("Specify the timeout in number of seconds to wait. It should be greater than 0. Default value %s seconds will be used.", iPhoneSimulator.DEFAULT_TIMEOUT_IN_SECONDS.toString()));
+			}
+		}
+
+		var time = $.NSNumber("numberWithDouble", timeoutParam);
 		var timeout = time("doubleValue");
 
 		var session = this.getClassByName("DTiPhoneSimulatorSession")("alloc")("init")("autorelease");
