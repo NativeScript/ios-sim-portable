@@ -11,6 +11,7 @@ var knownOptions: any = {
 	"stderr": String,
 	"env": String,
 	"args": String,
+	"timeout": String,
 	"help": Boolean
 };
 
