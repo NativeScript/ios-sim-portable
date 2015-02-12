@@ -8,8 +8,8 @@
     "prepublish": "node prepublish.js"
   },
   "bin": {
-     "ios-sim-portable": "./bin/ios-sim-portable.js",
-     "isim": "./bin/ios-sim-portable.js"
+    "ios-sim-portable": "./bin/ios-sim-portable.js",
+    "isim": "./bin/ios-sim-portable.js"
   },
   "repository": {
     "type": "git",
@@ -26,16 +26,16 @@
   },
   "homepage": "https://github.com/telerik/ios-sim-portable",
   "dependencies": {
+    "NodObjC": "https://github.com/telerik/NodObjC/tarball/master",
     "colors": "0.6.2",
     "fibers": "https://github.com/icenium/node-fibers/tarball/v1.0.5.1",
-    "NodObjC": "https://github.com/telerik/NodObjC/tarball/master",
-    "underscore": "1.6.0",
+    "lodash": "3.1.0",
     "yargs": "1.2.2"
   },
   "devDependencies": {
-      "grunt-contrib-clean": "0.5.0",
-      "grunt": "0.4.2",
-      "grunt-ts": "1.11.2"
+    "grunt-contrib-clean": "0.5.0",
+    "grunt": "0.4.2",
+    "grunt-ts": "1.11.2"
   },
   "engines": {
     "node": ">=0.10.26 <0.10.34 || >=0.10.35 <0.11.0"
