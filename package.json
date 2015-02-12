@@ -29,7 +29,7 @@
     "NodObjC": "https://github.com/telerik/NodObjC/tarball/master",
     "colors": "0.6.2",
     "fibers": "https://github.com/icenium/node-fibers/tarball/v1.0.5.1",
-    "lodash": "3.1.0",
+    "lodash": "3.2.0",
     "yargs": "1.2.2"
   },
   "devDependencies": {
