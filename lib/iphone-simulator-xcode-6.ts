@@ -35,16 +35,10 @@ export class XCode6Simulator implements ISimulator {
 	}
 
 	private getDevicesInfo(): IDevice[] {
-		var availableDeviceIdentifiers = this.getAvailableDevices();
-		var keys = _.keys(availableDeviceIdentifiers);
-		var result: IDevice[] = [];
-
-		_.each(keys, deviceIdentifier => {
-			var devices = availableDeviceIdentifiers[deviceIdentifier];
-			_.each(devices, device => result.push(device));
-		});
-
-		return result;
+		return <IDevice[]> _(this.getAvailableDevices())
+			.map(_.identity)
+			.flatten()
+			.value();
 	}
 
 	private get deviceIdentifier(): string {
