@@ -40,7 +40,7 @@ export class iPhoneSimulator implements IiPhoneSimulator {
 	public printDeviceTypes(): IFuture<void> {
 		var action = () => {
 			var simulator = this.createSimulator();
-			_.each(simulator.validDeviceIdentifiers, (identifier: any) => console.log(identifier));
+			_.each(simulator.deviceIdentifiersInfo, (identifier: any) => console.log(identifier));
 		}
 
 		return this.execute(action, { canRunMainLoop: false });

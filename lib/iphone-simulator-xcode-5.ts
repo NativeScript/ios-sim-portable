@@ -26,6 +26,10 @@ export class XCode5Simulator implements ISimulator {
 		return _.keys(XCode5Simulator.allowedDeviceIdentifiers);
 	}
 
+	public get deviceIdentifiersInfo(): string[] {
+		return _.keys(XCode5Simulator.allowedDeviceIdentifiers);
+	}
+
 	public setSimulatedDevice(config:any): void {
 		config("setSimulatedDeviceInfoName", $(this.deviceIdentifier));
 	}

@@ -1,6 +1,6 @@
 ///<reference path="./.d.ts"/>
 "use strict";
-global._ = require("underscore");
+global._ = require("lodash");
 
 import Fiber = require("fibers");
 import Future = require("fibers/future");

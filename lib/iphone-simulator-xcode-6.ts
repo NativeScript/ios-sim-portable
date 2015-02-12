@@ -13,36 +13,20 @@ export class XCode6Simulator implements ISimulator {
 	private static DEFAULT_DEVICE_IDENTIFIER = "iPhone-4s";
 
 
-	private availableDevices: IDictionary<IDevice>;
+	private availableDevices: IDictionary<IDevice[]>;
 
 	constructor() {
 		this.availableDevices = Object.create(null);
 	}
 
 	public get validDeviceIdentifiers(): string[] {
-		var simDeviceSet = $.classDefinition.getClassByName("SimDeviceSet");
-		var devicesInfo: string[] = [];
+		var devices = this.getDevicesInfo();
+		return _.map(devices, device => device.deviceIdentifier);
+	}
 
-		if(simDeviceSet) {
-			var deviceSet = simDeviceSet("defaultSet");
-			var devices = deviceSet("availableDevices");
-
-			var count = devices("count");
-			for(var index=0; index < count; index++) {
-				var device = devices("objectAtIndex", index);
-
-				var deviceIdentifier = device("deviceType")("identifier").toString();
-				var deviceIdentifierPrefixIndex = deviceIdentifier.indexOf(XCode6Simulator.DEFAULT_DEVICE_IDENTIFIER);
-				var deviceIdentifierWithoutPrefix = deviceIdentifier.substring(deviceIdentifierPrefixIndex + XCode6Simulator.DEVICE_IDENTIFIER_PREFIX.length + 2);
-
-				var runtimeVersion = device("runtime")("versionString").toString();
-				var deviceInfo = [util.format("Device Identifier: %s", deviceIdentifierWithoutPrefix),
-					util.format("Runtime Version: %s", runtimeVersion)].join(os.EOL);
-				devicesInfo.push(deviceInfo + os.EOL);
-			}
-		}
-
-		return devicesInfo;
+	public get deviceIdentifiersInfo(): string[] {
+		var devices = this.getDevicesInfo();
+		return _.map(devices, device => util.format("Device Identifier: %s. %sRuntime Version: %s %s", device.fullDeviceIdentifier, os.EOL, device.runtimeVersion, os.EOL));
 	}
 
 	public setSimulatedDevice(config: any): void {
@@ -50,11 +34,18 @@ export class XCode6Simulator implements ISimulator {
 		config("setDevice", device);
 	}
 
+	private getDevicesInfo(): IDevice[] {
+		return <IDevice[]> _(this.getAvailableDevices())
+			.map(_.identity)
+			.flatten()
+			.value();
+	}
+
 	private get deviceIdentifier(): string {
 		return options.device || XCode6Simulator.DEFAULT_DEVICE_IDENTIFIER;
 	}
 
-	private getAvailableDevices(): IDictionary<IDevice> {
+	private getAvailableDevices(): IDictionary<IDevice[]> {
 		if(_.isEmpty(this.availableDevices)) {
 			var deviceSet = $.classDefinition.getClassByName("SimDeviceSet")("defaultSet");
 			var devices = deviceSet("availableDevices");
@@ -62,13 +53,23 @@ export class XCode6Simulator implements ISimulator {
 			if(count > 0) {
 				for(var index=0; index<count; index++) {
 					var device = devices("objectAtIndex", index);
-					var deviceTypeIdentifier = device("deviceType")("identifier").toString();
+
+					var deviceIdentifier = device("deviceType")("identifier").toString();
+					var deviceIdentifierPrefixIndex = deviceIdentifier.indexOf(XCode6Simulator.DEVICE_IDENTIFIER_PREFIX);
+					var deviceIdentifierWithoutPrefix = deviceIdentifier.substring(deviceIdentifierPrefixIndex + XCode6Simulator.DEVICE_IDENTIFIER_PREFIX.length + 1);
+
 					var runtimeVersion = device("runtime")("versionString").toString();
-					this.availableDevices[deviceTypeIdentifier] = {
+
+					if(!this.availableDevices[deviceIdentifier]) {
+						this.availableDevices[deviceIdentifier] = [];
+					}
+
+					this.availableDevices[deviceIdentifier].push({
 						device: device,
-						deviceTypeIdentifier: deviceTypeIdentifier,
+						deviceIdentifier: deviceIdentifierWithoutPrefix,
+						fullDeviceIdentifier: this.buildFullDeviceIdentifier(deviceIdentifier),
 						runtimeVersion: runtimeVersion
-					};
+					});
 				}
 			}
 		}
@@ -77,15 +78,19 @@ export class XCode6Simulator implements ISimulator {
 	}
 
 	private getDeviceByIdentifier(deviceIdentifier: string): any {
-		var fullDeviceIdentifier = util.format("%s.%s", XCode6Simulator.DEVICE_IDENTIFIER_PREFIX, deviceIdentifier);
 		var availableDevices = this.getAvailableDevices();
 		if(!_.isEmpty(availableDevices)) {
+			var fullDeviceIdentifier = this.buildFullDeviceIdentifier(deviceIdentifier);
 			var selectedDevice = availableDevices[fullDeviceIdentifier];
 			if(selectedDevice) {
-				return selectedDevice.device;
+				return selectedDevice[0].device;
 			}
 		}
 
 		errors.fail("Unable to find device with identifier ", deviceIdentifier);
+	}
+
+	private buildFullDeviceIdentifier(deviceIdentifier: string): string {
+		return util.format("%s.%s", XCode6Simulator.DEVICE_IDENTIFIER_PREFIX, deviceIdentifier);
 	}
 }

@@ -17,7 +17,8 @@ interface ICommandExecutor {
 
 interface IDevice {
 	device: any; // NodObjC wrapper to device
-	deviceTypeIdentifier: string;
+	deviceIdentifier: string;
+	fullDeviceIdentifier: string;
 	runtimeVersion: string;
 }
 
@@ -27,6 +28,7 @@ interface IDictionary<T> {
 
 interface ISimulator {
 	validDeviceIdentifiers: string[];
+	deviceIdentifiersInfo: string[];
 	setSimulatedDevice(config: any): void;
 }
 
