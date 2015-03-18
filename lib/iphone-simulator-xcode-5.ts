@@ -20,7 +20,7 @@ export class XCode5Simulator implements ISimulator {
 		"iPad": "iPad",
 		"iPad-Retina": "iPad Retina",
 		"iPad-Retina-64-bit": "iPad Retina (64-bit)"
-	}
+	};
 
 	public get validDeviceIdentifiers(): string[] {
 		return _.keys(XCode5Simulator.allowedDeviceIdentifiers);

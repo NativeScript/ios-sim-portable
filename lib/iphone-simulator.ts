@@ -34,14 +34,14 @@ export class iPhoneSimulator implements IiPhoneSimulator {
 			errors.fail("Path does not exist ", appPath);
 		}
 
-		return this.execute(this.launch, { canRunMainLoop: true, appPath: appPath});
+		return this.execute(this.launch, { canRunMainLoop: true, appPath: appPath });
 	}
 
 	public printDeviceTypes(): IFuture<void> {
 		var action = () => {
 			var simulator = this.createSimulator();
 			_.each(simulator.deviceIdentifiersInfo, (identifier: any) => console.log(identifier));
-		}
+		};
 
 		return this.execute(action, { canRunMainLoop: false });
 	}
@@ -71,27 +71,35 @@ export class iPhoneSimulator implements IiPhoneSimulator {
 	}
 
 	private execute(action: (appPath?: string) => any, opts: IExecuteOptions): IFuture<void> {
-		return (() => {
-			$.importFramework(iPhoneSimulator.FOUNDATION_FRAMEWORK_NAME);
-			$.importFramework(iPhoneSimulator.APPKIT_FRAMEWORK_NAME);
+		$.importFramework(iPhoneSimulator.FOUNDATION_FRAMEWORK_NAME);
+		$.importFramework(iPhoneSimulator.APPKIT_FRAMEWORK_NAME);
 
-			var pool = $.NSAutoreleasePool("alloc")("init");
+		var pool = $.NSAutoreleasePool("alloc")("init");
 
-			var developerDirectoryPath = this.findDeveloperDirectory().wait();
-			if(!developerDirectoryPath) {
-				errors.fail("Unable to find developer directory");
-			}
+		var developerDirectoryPath = this.findDeveloperDirectory().wait();
+		if(!developerDirectoryPath) {
+			errors.fail("Unable to find developer directory");
+		}
 
-			this.loadFrameworks(developerDirectoryPath);
+		this.loadFrameworks(developerDirectoryPath);
 
-			action.apply(this, [opts.appPath]);
+		action.apply(this, [opts.appPath]);
 
-			if(opts.canRunMainLoop) {
-				$.NSRunLoop("mainRunLoop")("run");
-			}
-
-			pool("release");
-		}).future<void>()();
+		var future = new Future<void>();
+		if(opts.canRunMainLoop) {
+			// Keeps the Node loop running
+			(function runLoop() {
+				if($.CFRunLoopRunInMode($.kCFRunLoopDefaultMode, 0.1, false)) {
+					setTimeout(runLoop, 0);
+				} else {
+					pool("release");
+					future.return();
+				}
+			}());
+		} else {
+			future.return();
+		}
+		return future;
 	}
 
 	private launch(appPath: string): void {
@@ -124,12 +132,18 @@ export class iPhoneSimulator implements IiPhoneSimulator {
 		}
 		simulator.setSimulatedDevice(config);
 
-		if(options.stderr) {
-			config("setSimulatedApplicationStdErrPath", $(options.stderr));
-		}
-
-		if(options.stdout) {
-			config("setSimulatedApplicationStdOutPath", $(options.stdout));
+		if(options.logging) {
+			var logPath = this.createLogPipe(appPath).wait();
+			fs.createReadStream(logPath, { encoding: "utf8" }).pipe(process.stdout);
+			config("setSimulatedApplicationStdErrPath", $(logPath));
+			config("setSimulatedApplicationStdOutPath", $(logPath));
+		} else {
+			if(options.stderr) {
+				config("setSimulatedApplicationStdErrPath", $(options.stderr));
+			}
+			if(options.stdout) {
+				config("setSimulatedApplicationStdOutPath", $(options.stdout));
+			}
 		}
 
 		config("setLocalizedClientName", $("ios-sim-portable"));
@@ -180,7 +194,7 @@ export class iPhoneSimulator implements IiPhoneSimulator {
 	}
 
 	private loadFramework(frameworkPath: string) {
-		var bundle =  $.NSBundle("bundleWithPath", $(frameworkPath));
+		var bundle = $.NSBundle("bundleWithPath", $(frameworkPath));
 		if(!bundle("load")) {
 			errors.fail("Unable to load ", frameworkPath);
 		}
@@ -243,6 +257,22 @@ export class iPhoneSimulator implements IiPhoneSimulator {
 		}
 
 		return simulator;
+	}
+
+	private createLogPipe(appPath: string): IFuture<string> {
+		var future = new Future<string>();
+		var logPath = path.join(path.dirname(appPath), "." + path.basename(appPath, ".app") + ".log");
+
+		var command = util.format("rm -f %s && mkfifo %s", logPath, logPath);
+		child_process.exec(command, (error: Error, stdout: NodeBuffer, stderr: NodeBuffer) => {
+			if(error) {
+				future.throw(error);
+			} else {
+				future.return(logPath);
+			}
+		});
+
+		return future;
 	}
 }
 
