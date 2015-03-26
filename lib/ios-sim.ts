@@ -14,5 +14,3 @@ var fiber = Fiber(() => {
 });
 
 fiber.run();
-
-

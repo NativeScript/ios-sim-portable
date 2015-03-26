@@ -12,10 +12,11 @@ var knownOptions: any = {
 	"env": String,
 	"args": String,
 	"timeout": String,
-	"help": Boolean
+	"help": Boolean,
+	"logging": Boolean
 };
 
-var parsed = {};
+var parsed: any = {};
 
 _.each(_.keys(knownOptions), opt => {
 	var type = knownOptions[opt];
@@ -26,7 +27,6 @@ _.each(_.keys(knownOptions), opt => {
 	}
 });
 
-_.each(_.keys(yargs.argv), opt => exports[opt] = yargs.argv[opt]);
+_.each(_.keys(yargs.argv), opt => parsed[opt] = yargs.argv[opt]);
 
-declare var exports: any;
-export = exports;
+export = parsed;

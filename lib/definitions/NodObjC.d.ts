@@ -7,7 +7,8 @@ declare module "NodObjC" {
 	export var NSNumber: INSNumber;
 	export var NSBundle: INSBundle;
 	export var NSAutoreleasePool: INSAutoreleasePool;
-	export var NSRunLoop: INSRunLoop;
+	export var kCFRunLoopDefaultMode: INSString;
+	export function CFRunLoopRunInMode(mode: INSString, seconds: number, returnAfterSourceHandled: boolean): number;
 
 	interface IClass {
 		getClassByName(className: string): any;
