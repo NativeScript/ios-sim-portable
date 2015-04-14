@@ -146,6 +146,13 @@ export class iPhoneSimulator implements IiPhoneSimulator {
 			}
 		}
 
+		if (options.args) {
+			var args = options.args.trim().split(/\s+/);
+			var nsArgs = $.NSMutableArray("array");
+			args.forEach((x: string) => nsArgs("addObject", $(x)));
+			config("setSimulatedApplicationLaunchArgs", nsArgs);
+		}
+
 		config("setLocalizedClientName", $("ios-sim-portable"));
 
 		var sessionError: any = new Buffer("");
