@@ -270,7 +270,7 @@ export class iPhoneSimulator implements IiPhoneSimulator {
 		var future = new Future<string>();
 		var logPath = path.join(path.dirname(appPath), "." + path.basename(appPath, ".app") + ".log");
 
-		var command = util.format("rm -f %s && mkfifo %s", logPath, logPath);
+		var command = util.format("rm -f \"%s\" && mkfifo \"%s\"", logPath, logPath);
 		child_process.exec(command, (error: Error, stdout: NodeBuffer, stderr: NodeBuffer) => {
 			if(error) {
 				future.throw(error);
