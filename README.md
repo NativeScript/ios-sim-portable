@@ -55,6 +55,7 @@ General commands:
 	launch <full path>   Launches the application bundle at the specified path in the iOS Simulator.
 	device-types         Lists the available device types for the current Xcode version.
 	sdks                 Lists the available iOS SDK versions.
+	notify-post          Post a darwin notification on a device.
 
 For more information about each command, run 
 $ isim help <command>
