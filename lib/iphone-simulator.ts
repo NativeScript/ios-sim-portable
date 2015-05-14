@@ -70,6 +70,28 @@ export class iPhoneSimulator implements IiPhoneSimulator {
 		return this.execute(action, { canRunMainLoop: false });
 	}
 
+	public sendNotification(notification: string): IFuture<void> {
+		if(!notification) {
+			errors.fail("Notification required");
+		}
+
+		var action = () => {
+			var simulator = new xcode6SimulatorLib.XCode6Simulator();
+			var device = simulator.getSimulatedDevice();
+
+			if (!device) {
+				errors.fail("Could not find device");
+			}
+
+			var result = device("postDarwinNotification", $(notification), "error", null);
+			if (!result) {
+				errors.fail("Could not send notification: " + notification);
+			}
+		};
+
+		return this.execute(action, { canRunMainLoop: false });
+	}
+
 	private execute(action: (appPath?: string) => any, opts: IExecuteOptions): IFuture<void> {
 		$.importFramework(iPhoneSimulator.FOUNDATION_FRAMEWORK_NAME);
 		$.importFramework(iPhoneSimulator.APPKIT_FRAMEWORK_NAME);

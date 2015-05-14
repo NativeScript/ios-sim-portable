@@ -5,6 +5,7 @@ interface IiPhoneSimulator {
 	run(appName: string): IFuture<void>;
 	printDeviceTypes(): IFuture<void>;
 	printSDKS(): IFuture<void>;
+	sendNotification(notification: string): IFuture<void>;
 }
 
 interface ICommand {

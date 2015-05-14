@@ -34,6 +34,10 @@ export class XCode6Simulator implements ISimulator {
 		config("setDevice", device);
 	}
 
+	public getSimulatedDevice(): any {
+		return this.getDeviceByIdentifier(this.deviceIdentifier);
+	}
+
 	private getDevicesInfo(): IDevice[] {
 		return <IDevice[]> _(this.getAvailableDevices())
 			.map(_.identity)
