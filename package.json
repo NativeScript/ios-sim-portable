@@ -1,6 +1,6 @@
 {
   "name": "ios-sim-portable",
-  "version": "1.0.8",
+  "version": "1.0.9-alpha",
   "description": "",
   "main": "./lib/ios-sim.js",
   "scripts": {
@@ -26,9 +26,9 @@
   },
   "homepage": "https://github.com/telerik/ios-sim-portable",
   "dependencies": {
-    "NodObjC": "https://github.com/telerik/NodObjC/tarball/master",
+    "NodObjC": "https://github.com/telerik/NodObjC/tarball/v1.0.0.0",
     "colors": "0.6.2",
-    "fibers": "https://github.com/icenium/node-fibers/tarball/v1.0.5.1",
+    "fibers": "https://github.com/icenium/node-fibers/tarball/v1.0.6.0",
     "lodash": "3.2.0",
     "yargs": "1.2.2"
   },
