@@ -26,9 +26,9 @@
   },
   "homepage": "https://github.com/telerik/ios-sim-portable",
   "dependencies": {
-    "NodObjC": "https://github.com/telerik/NodObjC/tarball/v1.0.0.0",
+    "NodObjC": "https://github.com/telerik/NodObjC/tarball/v1.0.0.0-proton",
     "colors": "0.6.2",
-    "fibers": "https://github.com/icenium/node-fibers/tarball/v1.0.6.0",
+    "fibers": "https://github.com/icenium/node-fibers/tarball/v1.0.6.0-proton",
     "lodash": "3.2.0",
     "yargs": "1.2.2"
   },
