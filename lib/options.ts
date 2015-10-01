@@ -14,7 +14,8 @@ var knownOptions: any = {
 	"timeout": String,
 	"help": Boolean,
 	"logging": Boolean,
-	"waitForDebugger": Boolean
+	"waitForDebugger": Boolean,
+	"sdkVersion": String
 };
 
 var parsed: any = {};

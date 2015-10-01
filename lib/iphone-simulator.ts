@@ -48,22 +48,9 @@ export class iPhoneSimulator implements IiPhoneSimulator {
 
 	public printSDKS(): IFuture<void> {
 		var action = () => {
-			var systemRootClass = this.getClassByName("DTiPhoneSimulatorSystemRoot");
-			var roots = systemRootClass("knownRoots");
-			var count = roots("count");
-
-			var sdks: ISdk[] = [];
-			for(var index=0; index < count; index++) {
-				var root = roots("objectAtIndex", index);
-
-				var displayName = root("sdkDisplayName").toString();
-				var version = root("sdkVersion").toString();
-				var rootPath = root("sdkRootPath").toString();
-
-				sdks.push(new Sdk(displayName, version, rootPath));
-			}
-
+			var sdks = this.getInstalledSdks();
 			sdks = _.sortBy(sdks, (sdk: ISdk) => sdk.version);
+
 			_.each(sdks, (sdk: ISdk) => console.log(sdk.sdkInfo() + os.EOL));
 		};
 
@@ -145,7 +132,7 @@ export class iPhoneSimulator implements IiPhoneSimulator {
 		config("setApplicationToSimulateOnStart",  appSpec);
 		config("setSimulatedApplicationShouldWaitForDebugger", options.waitForDebugger);
 
-		var sdkRoot = options.sdkRoot ? $(options.sdkRoot) : this.getClassByName("DTiPhoneSimulatorSystemRoot")("defaultRoot");
+		var sdkRoot = options.sdkVersion ? $(this.getSdkRootPathByVersion(options.sdkVersion)) : this.getClassByName("DTiPhoneSimulatorSystemRoot")("defaultRoot");
 		config("setSimulatedSystemRoot", sdkRoot);
 
 		var simulator = this.createSimulator(config);
@@ -305,6 +292,35 @@ export class iPhoneSimulator implements IiPhoneSimulator {
 		});
 
 		return future;
+	}
+
+	private getInstalledSdks(): ISdk[] {
+		var systemRootClass = this.getClassByName("DTiPhoneSimulatorSystemRoot");
+		var roots = systemRootClass("knownRoots");
+		var count = roots("count");
+
+		var sdks: ISdk[] = [];
+		for(var index=0; index < count; index++) {
+			var root = roots("objectAtIndex", index);
+
+			var displayName = root("sdkDisplayName").toString();
+			var version = root("sdkVersion").toString();
+			var rootPath = root("sdkRootPath").toString();
+
+			sdks.push(new Sdk(displayName, version, rootPath));
+		}
+
+		return sdks;
+	}
+
+	private getSdkRootPathByVersion(version: string): string {
+		var sdks = this.getInstalledSdks();
+		var sdk = _.find(sdks, sdk => sdk.version === version);
+		if(!sdk) {
+			errors.fail("Unable to find installed sdk with version %s. Verify that you have specified correct version and the sdk with that version is installed.", version);
+		}
+
+		return sdk.rootPath;
 	}
 }
 
