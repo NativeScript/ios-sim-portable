@@ -13,7 +13,8 @@ var knownOptions: any = {
 	"args": String,
 	"timeout": String,
 	"help": Boolean,
-	"logging": Boolean
+	"logging": Boolean,
+	"waitForDebugger": Boolean
 };
 
 var parsed: any = {};

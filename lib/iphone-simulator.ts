@@ -132,6 +132,8 @@ export class iPhoneSimulator implements IiPhoneSimulator {
 		});
 		sessionDelegate.addMethod("session:didStart:withError:", "v@:@c@", function(self: any, sel: string, session: any, started: boolean, error:any) {
 			iPhoneSimulator.logSessionInfo(error, "Session started without errors.", "Session started with error ");
+			
+			console.log(`${appPath}: ${session("simulatedApplicationPID")}`);
 			if(options.exit) {
 				process.exit(0);
 			}
@@ -141,6 +143,7 @@ export class iPhoneSimulator implements IiPhoneSimulator {
 		var appSpec = this.getClassByName("DTiPhoneSimulatorApplicationSpecifier")("specifierWithApplicationPath", $(appPath));
 		var config = this.getClassByName("DTiPhoneSimulatorSessionConfig")("alloc")("init")("autorelease");
 		config("setApplicationToSimulateOnStart",  appSpec);
+		config("setSimulatedApplicationShouldWaitForDebugger", options.waitForDebugger);
 
 		var sdkRoot = options.sdkRoot ? $(options.sdkRoot) : this.getClassByName("DTiPhoneSimulatorSystemRoot")("defaultRoot");
 		config("setSimulatedSystemRoot", sdkRoot);
