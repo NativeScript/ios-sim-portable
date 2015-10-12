@@ -132,7 +132,7 @@ export class iPhoneSimulator implements IiPhoneSimulator {
 		});
 		sessionDelegate.addMethod("session:didStart:withError:", "v@:@c@", function(self: any, sel: string, session: any, started: boolean, error:any) {
 			iPhoneSimulator.logSessionInfo(error, "Session started without errors.", "Session started with error ");
-			
+
 			console.log(`${appPath}: ${session("simulatedApplicationPID")}`);
 			if(options.exit) {
 				process.exit(0);
@@ -305,6 +305,35 @@ export class iPhoneSimulator implements IiPhoneSimulator {
 		});
 
 		return future;
+	}
+
+	private getInstalledSdks(): ISdk[] {
+		var systemRootClass = this.getClassByName("DTiPhoneSimulatorSystemRoot");
+		var roots = systemRootClass("knownRoots");
+		var count = roots("count");
+
+		var sdks: ISdk[] = [];
+		for(var index=0; index < count; index++) {
+			var root = roots("objectAtIndex", index);
+
+			var displayName = root("sdkDisplayName").toString();
+			var version = root("sdkVersion").toString();
+			var rootPath = root("sdkRootPath").toString();
+
+			sdks.push(new Sdk(displayName, version, rootPath));
+		}
+
+		return sdks;
+	}
+
+	private getSdkRootPathByVersion(version: string): string {
+		var sdks = this.getInstalledSdks();
+		var sdk = _.find(sdks, sdk => { return sdk.version === version; });
+		if(!sdk) {
+			errors.fail("Unable to find installed sdk with version %s. Verify that you have specified correct version and the sdk with that version is installed.", version);
+		}
+
+		return sdk.rootPath;
 	}
 }
 
