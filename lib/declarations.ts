@@ -17,10 +17,12 @@ interface ICommandExecutor {
 }
 
 interface IDevice {
-	device: any; // NodObjC wrapper to device
+	device?: any; // NodObjC wrapper to device
 	deviceIdentifier: string;
 	fullDeviceIdentifier: string;
 	runtimeVersion: string;
+	name?: string;
+	state?: string;
 }
 
 interface IDictionary<T> {
