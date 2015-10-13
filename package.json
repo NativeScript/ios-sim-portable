@@ -30,7 +30,7 @@
     "fibers": "https://github.com/icenium/node-fibers/tarball/v1.0.6.0",
     "lodash": "3.2.0",
     "nodobjc": "https://github.com/telerik/NodObjC/tarball/v2.0.0.0",
-    "yargs": "1.2.2"
+    "yargs": "3.15.0"
   },
   "devDependencies": {
     "grunt-contrib-clean": "0.6.0",
