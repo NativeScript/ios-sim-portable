@@ -1,19 +1,17 @@
 ///<reference path="./.d.ts"/>
 "use strict";
 
-import child_process = require("child_process");
-import errors = require("./errors");
+import * as child_process from "child_process";
+import * as errors from "./errors";
 import Future = require("fibers/future");
-import util = require("util");
+import * as util from "util";
 
 export function exec(command: string): IFuture<any> {
 	var future = new Future<any>();
 
 	child_process.exec(command, (error: Error, stdout: NodeBuffer, stderr: NodeBuffer) => {
-		//console.log(util.format("Executing: %s", command));
-
 		if(error) {
-			errors.fail(util.format("Error %s while executing %s.", error.message, command));
+			errors.fail(`Error ${error.message} while executing ${command}.`);
 		} else {
 			future.return(stdout ? stdout.toString() : "");
 		}
@@ -42,7 +40,7 @@ export function spawn(command: string, args: string[]): IFuture<string> {
 	}
 
 	childProcess.on("close", (arg: any) => {
-		var exitCode = typeof arg == 'number' ? arg : arg && arg.code;
+		var exitCode = typeof arg === 'number' ? arg : arg && arg.code;
 		if(exitCode === 0) {
 			future.return(capturedOut ? capturedOut.trim() : null);
 		} else {

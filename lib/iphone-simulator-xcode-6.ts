@@ -1,11 +1,11 @@
 ///<reference path="./.d.ts"/>
 "use strict";
-import errors = require("./errors");
-import options = require("./options");
-import utils = require("./utils");
-import util = require("util");
-import os = require("os");
-var $ = require("nodobjc");
+import * as errors from "./errors";
+import * as options from "./options";
+import * as utils from "./utils";
+import * as util from "util";
+import * as os from "os";
+let $ = require("nodobjc");
 
 import iPhoneSimulatorBaseLib = require("./iphone-interop-simulator-base");
 
@@ -14,10 +14,12 @@ export class XCode6Simulator extends iPhoneSimulatorBaseLib.IPhoneInteropSimulat
 	private static DEVICE_IDENTIFIER_PREFIX = "com.apple.CoreSimulator.SimDeviceType";
 	private static DEFAULT_DEVICE_IDENTIFIER = "iPhone-4s";
 
-	private cachedDevices: IDevice[] = null;
+	private cachedDevices: IDevice[];
 
 	constructor() {
 		super(this);
+		
+		this.cachedDevices = null;
 	}
 
 	public setSimulatedDevice(config: any): void {
@@ -41,18 +43,18 @@ export class XCode6Simulator extends iPhoneSimulatorBaseLib.IPhoneInteropSimulat
 		if(!this.cachedDevices) {
 			this.cachedDevices = [];
 
-			var deviceSet = $.classDefinition.getClassByName("SimDeviceSet")("defaultSet");
-			var devices = deviceSet("availableDevices");
-			var count = devices("count");
+			let deviceSet = $.classDefinition.getClassByName("SimDeviceSet")("defaultSet");
+			let devices = deviceSet("availableDevices");
+			let count = devices("count");
 			if(count > 0) {
-				for(var index=0; index<count; index++) {
-					var device = devices("objectAtIndex", index);
+				for(let index=0; index<count; index++) {
+					let device = devices("objectAtIndex", index);
 
-					var deviceIdentifier = device("deviceType")("identifier").toString();
-					var deviceIdentifierPrefixIndex = deviceIdentifier.indexOf(XCode6Simulator.DEVICE_IDENTIFIER_PREFIX);
-					var deviceIdentifierWithoutPrefix = deviceIdentifier.substring(deviceIdentifierPrefixIndex + XCode6Simulator.DEVICE_IDENTIFIER_PREFIX.length + 1);
+					let deviceIdentifier = device("deviceType")("identifier").toString();
+					let deviceIdentifierPrefixIndex = deviceIdentifier.indexOf(XCode6Simulator.DEVICE_IDENTIFIER_PREFIX);
+					let deviceIdentifierWithoutPrefix = deviceIdentifier.substring(deviceIdentifierPrefixIndex + XCode6Simulator.DEVICE_IDENTIFIER_PREFIX.length + 1);
 
-					var runtimeVersion = device("runtime")("versionString").toString();
+					let runtimeVersion = device("runtime")("versionString").toString();
 
 					this.cachedDevices.push({
 						name: "",
@@ -69,23 +71,19 @@ export class XCode6Simulator extends iPhoneSimulatorBaseLib.IPhoneInteropSimulat
 	}
 
 	private get sdks(): ISdk[] {
-		var systemRootClass = $.classDefinition.getClassByName("DTiPhoneSimulatorSystemRoot");
-		var roots = systemRootClass("knownRoots");
-		var count = roots("count");
+		let systemRootClass = $.classDefinition.getClassByName("DTiPhoneSimulatorSystemRoot");
+		let roots = systemRootClass("knownRoots");
+		let count = roots("count");
 
-		var sdks: ISdk[] = [];
-		for(var index=0; index < count; index++) {
-			var root = roots("objectAtIndex", index);
+		let sdks: ISdk[] = [];
+		for(let index=0; index < count; index++) {
+			let root = roots("objectAtIndex", index);
 
-			var displayName = root("sdkDisplayName").toString();
-			var version = root("sdkVersion").toString();
-			var rootPath = root("sdkRootPath").toString();
+			let displayName = root("sdkDisplayName").toString();
+			let version = root("sdkVersion").toString();
+			let rootPath = root("sdkRootPath").toString();
 
-			sdks.push({
-				displayName: displayName,
-				version: version,
-				rootPath: rootPath
-			});
+			sdks.push({ displayName, version, rootPath });
 		}
 
 		return sdks;
