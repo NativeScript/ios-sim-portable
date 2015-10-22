@@ -1,4 +1,4 @@
-declare module "NodObjC" {
+declare module "nodobjc" {
 	export function importFramework(frameworkName: string): void;
 	export var classDefinition: IClass;
 
