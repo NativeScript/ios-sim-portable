@@ -17,7 +17,7 @@ interface ICommandExecutor {
 }
 
 interface IDevice {
-	device: any; // NodObjC wrapper to device
+	device: any; // nodobjc wrapper to device
 	deviceIdentifier: string;
 	fullDeviceIdentifier: string;
 	runtimeVersion: string;

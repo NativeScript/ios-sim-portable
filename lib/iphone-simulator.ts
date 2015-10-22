@@ -14,7 +14,7 @@ import utils = require("./utils");
 import xcode6SimulatorLib = require("./iphone-simulator-xcode-6");
 import xcode5SimulatorLib = require("./iphone-simulator-xcode-5");
 
-var $ = require("NodObjC");
+var $ = require("nodobjc");
 
 export class iPhoneSimulator implements IiPhoneSimulator {
 

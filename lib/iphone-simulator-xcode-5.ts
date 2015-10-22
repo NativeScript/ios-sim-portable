@@ -6,7 +6,7 @@ import options = require("./options");
 import utils = require("./utils");
 import util = require("util");
 
-var $ = require("NodObjC");
+var $ = require("nodobjc");
 
 export class XCode5Simulator implements ISimulator {
 
