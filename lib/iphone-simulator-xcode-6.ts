@@ -18,17 +18,17 @@ export class XCode6Simulator extends iPhoneSimulatorBaseLib.IPhoneInteropSimulat
 
 	constructor() {
 		super(this);
-		
+
 		this.cachedDevices = null;
 	}
 
 	public setSimulatedDevice(config: any): void {
-		let device = this.getDeviceByName().device;
+		let device = this.getDeviceByName().rawDevice;
 		config("setDevice", device);
 	}
 
 	public getSimulatedDevice(): any {
-		return this.getDeviceByName().device;
+		return this.getDeviceByName().rawDevice;
 	}
 
 	public getDevices(): IFuture<IDevice[]> {
@@ -57,7 +57,7 @@ export class XCode6Simulator extends iPhoneSimulatorBaseLib.IPhoneInteropSimulat
 					let runtimeVersion = device("runtime")("versionString").toString();
 
 					this.cachedDevices.push({
-						name: "",
+						name: deviceIdentifierWithoutPrefix,
 						id: deviceIdentifierWithoutPrefix,
 						fullId: this.buildFullDeviceIdentifier(deviceIdentifier),
 						runtimeVersion: runtimeVersion,
@@ -109,8 +109,9 @@ export class XCode6Simulator extends iPhoneSimulatorBaseLib.IPhoneInteropSimulat
 		return options.device || XCode6Simulator.DEFAULT_DEVICE_IDENTIFIER;
 	}
 
-	private getDeviceByName(): any {
-		let device = _.find(this.devices, (device) => device.name === this.deviceName);
+	private getDeviceByName(): IDevice {
+		let devices = this.getDevices().wait();
+		let device = _.find(devices, (device) => device.name === this.deviceName);
 		if(!device) {
 			errors.fail("Unable to find device with name ", this.deviceName);
 		}
