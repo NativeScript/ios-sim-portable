@@ -17,6 +17,11 @@ export class Simctl implements ISimctl {
 
 		args = args.concat([deviceId, applicationIdentifier]);
 
+		if(options.args) {
+			let applicationArgs = options.args.trim().split(/\s+/);
+			_.each(applicationArgs, (arg: string) => args.push(arg));
+		}
+
 		return this.simctlExec("launch", args);
 	}
 
