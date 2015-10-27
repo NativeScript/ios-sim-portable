@@ -14,7 +14,7 @@ var $ = require("NodObjC");
 
 export class XCode7Simulator implements ISimulator {
 	private static DEVICE_IDENTIFIER_PREFIX = "com.apple.CoreSimulator.SimDeviceType";
-	private static DEFAULT_DEVICE_NAME = "iPhone-4s";
+	private static DEFAULT_DEVICE_NAME = "iPhone 6";
 
 	private simctl: ISimctl = null;
 
@@ -81,6 +81,10 @@ export class XCode7Simulator implements ISimulator {
 					return this.isDeviceBooted(device);
 				}
 			});
+
+			if(!result) {
+				result = _.find(devices, (device: IDevice) => device.name === XCode7Simulator.DEFAULT_DEVICE_NAME);
+			}
 
 			if(!result) {
 				let sortedDevices = _.sortBy(devices, (device) => device.runtimeVersion);
