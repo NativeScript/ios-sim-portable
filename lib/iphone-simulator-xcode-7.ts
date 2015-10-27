@@ -29,7 +29,12 @@ export class XCode7Simulator implements ISimulator {
 	public getSdks(): IFuture<ISdk[]> {
 		return (() => {
 			let devices = this.simctl.getDevices().wait();
-			return _.map(devices, device => device.runtimeVersion);
+			return _.map(devices, device => {
+				return {
+					displayName: `iOS ${device.runtimeVersion}`,
+					version: device.runtimeVersion
+				};
+			});
 		}).future<ISdk[]>()();
 	}
 

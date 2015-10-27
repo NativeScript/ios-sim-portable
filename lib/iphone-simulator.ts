@@ -25,14 +25,23 @@ export class iPhoneSimulator implements IiPhoneSimulator {
 		this.simulator = this.createSimulator().wait();
 	}
 
-	public get validDeviceIdentifiers(): string[] {
-		var devices = this.simulator.getDevices().wait();
-		return _.map(devices, device => device.id);
-	}
-
 	public run(applicationPath: string, applicationIdentifier: string): IFuture<void> {
 		if(!fs.existsSync(applicationPath)) {
 			errors.fail("Path does not exist ", applicationPath);
+		}
+
+		if(options.device) {
+			let deviceNames = _.unique(_.map(this.simulator.getDevices().wait(), (device: IDevice) => device.name));
+			if(!_.contains(deviceNames, options.device)) {
+				errors.fail(`Unable to find device ${options.device}. The valid device names are ${deviceNames.join(", ")}`);
+			}
+		}
+
+		if(options.sdkVersion) {
+			let runtimeVersions = _.unique(_.map(this.simulator.getDevices().wait(), (device: IDevice) => device.runtimeVersion));
+			if(!_.contains(runtimeVersions, options.sdkVersion)) {
+				errors.fail(`Unable to find sdk ${options.sdkVersion}. The valid runtime versions are ${runtimeVersions.join(", ")}`);
+			}
 		}
 
 		return this.simulator.run(applicationPath, applicationIdentifier);
@@ -48,9 +57,13 @@ export class iPhoneSimulator implements IiPhoneSimulator {
 	public printSDKS(): IFuture<void> {
 		return (() => {
 			let sdks = this.simulator.getSdks().wait();
-			_.each(sdks, (sdk) => console.log([util.format("    Display Name: %s", sdk.displayName),
-				util.format("    Version: %s", sdk.version),
-				util.format("    Root path: %s", sdk.rootPath)].join(os.EOL)) );
+			_.each(sdks, (sdk) => {
+				let output = `    Display Name: ${sdk.displayName} ${os.EOL}    Version: ${sdk.version} ${os.EOL}`;
+				if(sdk.rootPath) {
+					 output += `    Root path: ${sdk.rootPath} ${os.EOL}`;
+				}
+				console.log(output);
+			});
 		}).future<void>()();
 	}
 
