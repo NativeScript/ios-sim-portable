@@ -2,7 +2,7 @@
 "use strict";
 
 interface IiPhoneSimulator {
-	run(appName: string): IFuture<void>;
+	run(applicationPath: string, applicationIdentifier: string): IFuture<void>;
 	printDeviceTypes(): IFuture<void>;
 	printSDKS(): IFuture<void>;
 	sendNotification(notification: string): IFuture<void>;
@@ -17,20 +17,36 @@ interface ICommandExecutor {
 }
 
 interface IDevice {
-	device: any; // nodobjc wrapper to device
-	deviceIdentifier: string;
-	fullDeviceIdentifier: string;
+	name: string;
+	id: string;
+	fullId: string;
 	runtimeVersion: string;
+	state?: string;
+	rawDevice?: any; // NodObjC wrapper to device
+}
+
+interface ISimctl {
+	launch(deviceId: string, applicationIdentifier: string): IFuture<void>;
+	install(deviceId: string, applicationPath: string): IFuture<void>;
+	uninstall(deviceId: string, applicationIdentifier: string): IFuture<void>;
+	notifyPost(deviceId: string, notification: string): IFuture<void>;
+	getDevices(): IFuture<IDevice[]>;
 }
 
 interface IDictionary<T> {
 	[key: string]: T;
 }
 
-interface ISimulator {
-	validDeviceIdentifiers: string[];
-	deviceIdentifiersInfo: string[];
+interface IInteropSimulator {
+	getDevices(): IFuture<IDevice[]>;
 	setSimulatedDevice(config: any): void;
+}
+
+interface ISimulator {
+	getDevices(): IFuture<IDevice[]>;
+	getSdks(): IFuture<ISdk[]>;
+	run(applicationPath: string, applicationIdentifier: string): IFuture<void>;
+	sendNotification(notification: string): IFuture<void>;
 }
 
 interface IExecuteOptions {
@@ -42,5 +58,10 @@ interface ISdk {
 	displayName: string;
 	version: string;
 	rootPath: string;
-	sdkInfo(): string;
+}
+
+interface IXcodeVersionData {
+	major: string;
+	minor: string;
+	build: string;
 }

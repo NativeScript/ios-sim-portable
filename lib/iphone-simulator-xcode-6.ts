@@ -1,97 +1,122 @@
 ///<reference path="./.d.ts"/>
 "use strict";
-import errors = require("./errors");
-import options = require("./options");
-import utils = require("./utils");
-import util = require("util");
-import os = require("os");
-var $ = require("nodobjc");
+import * as errors from "./errors";
+import * as options from "./options";
+import * as utils from "./utils";
+import * as util from "util";
+import * as os from "os";
+let $ = require("nodobjc");
 
-export class XCode6Simulator implements ISimulator {
+import iPhoneSimulatorBaseLib = require("./iphone-interop-simulator-base");
+
+export class XCode6Simulator extends iPhoneSimulatorBaseLib.IPhoneInteropSimulatorBase implements IInteropSimulator {
 
 	private static DEVICE_IDENTIFIER_PREFIX = "com.apple.CoreSimulator.SimDeviceType";
 	private static DEFAULT_DEVICE_IDENTIFIER = "iPhone-4s";
 
-
-	private availableDevices: IDictionary<IDevice[]>;
+	private cachedDevices: IDevice[];
 
 	constructor() {
-		this.availableDevices = Object.create(null);
-	}
+		super(this);
 
-	public get validDeviceIdentifiers(): string[] {
-		var devices = this.getDevicesInfo();
-		return _.map(devices, device => device.deviceIdentifier);
-	}
-
-	public get deviceIdentifiersInfo(): string[] {
-		var devices = this.getDevicesInfo();
-		return _.map(devices, device => util.format("Device Identifier: %s. %sRuntime Version: %s %s", device.fullDeviceIdentifier, os.EOL, device.runtimeVersion, os.EOL));
+		this.cachedDevices = null;
 	}
 
 	public setSimulatedDevice(config: any): void {
-		var device = this.getDeviceByIdentifier(this.deviceIdentifier);
+		let device = this.getDeviceByName().rawDevice;
 		config("setDevice", device);
 	}
 
 	public getSimulatedDevice(): any {
-		return this.getDeviceByIdentifier(this.deviceIdentifier);
+		return this.getDeviceByName().rawDevice;
 	}
 
-	private getDevicesInfo(): IDevice[] {
-		return <IDevice[]> _(this.getAvailableDevices())
-			.map(_.identity)
-			.flatten()
-			.value();
+	public getDevices(): IFuture<IDevice[]> {
+		return this.execute(() => this.devices, { canRunMainLoop: false });
 	}
 
-	private get deviceIdentifier(): string {
-		return options.device || XCode6Simulator.DEFAULT_DEVICE_IDENTIFIER;
+	public getSdks(): IFuture<ISdk[]> {
+		return this.execute(() => this.sdks, { canRunMainLoop: false });
 	}
 
-	private getAvailableDevices(): IDictionary<IDevice[]> {
-		if(_.isEmpty(this.availableDevices)) {
-			var deviceSet = $.classDefinition.getClassByName("SimDeviceSet")("defaultSet");
-			var devices = deviceSet("availableDevices");
-			var count = devices("count");
+	private get devices(): IDevice[] {
+		if(!this.cachedDevices) {
+			this.cachedDevices = [];
+
+			let deviceSet = $.classDefinition.getClassByName("SimDeviceSet")("defaultSet");
+			let devices = deviceSet("availableDevices");
+			let count = devices("count");
 			if(count > 0) {
-				for(var index=0; index<count; index++) {
-					var device = devices("objectAtIndex", index);
+				for(let index=0; index<count; index++) {
+					let device = devices("objectAtIndex", index);
 
-					var deviceIdentifier = device("deviceType")("identifier").toString();
-					var deviceIdentifierPrefixIndex = deviceIdentifier.indexOf(XCode6Simulator.DEVICE_IDENTIFIER_PREFIX);
-					var deviceIdentifierWithoutPrefix = deviceIdentifier.substring(deviceIdentifierPrefixIndex + XCode6Simulator.DEVICE_IDENTIFIER_PREFIX.length + 1);
+					let deviceIdentifier = device("deviceType")("identifier").toString();
+					let deviceIdentifierPrefixIndex = deviceIdentifier.indexOf(XCode6Simulator.DEVICE_IDENTIFIER_PREFIX);
+					let deviceIdentifierWithoutPrefix = deviceIdentifier.substring(deviceIdentifierPrefixIndex + XCode6Simulator.DEVICE_IDENTIFIER_PREFIX.length + 1);
 
-					var runtimeVersion = device("runtime")("versionString").toString();
+					let runtimeVersion = device("runtime")("versionString").toString();
 
-					if(!this.availableDevices[deviceIdentifier]) {
-						this.availableDevices[deviceIdentifier] = [];
-					}
-
-					this.availableDevices[deviceIdentifier].push({
-						device: device,
-						deviceIdentifier: deviceIdentifierWithoutPrefix,
-						fullDeviceIdentifier: this.buildFullDeviceIdentifier(deviceIdentifier),
-						runtimeVersion: runtimeVersion
+					this.cachedDevices.push({
+						name: deviceIdentifierWithoutPrefix,
+						id: deviceIdentifierWithoutPrefix,
+						fullId: this.buildFullDeviceIdentifier(deviceIdentifier),
+						runtimeVersion: runtimeVersion,
+						rawDevice: device
 					});
 				}
 			}
 		}
 
-		return this.availableDevices;
+		return this.cachedDevices;
 	}
 
-	private getDeviceByIdentifier(deviceIdentifier: string): any {
-		var availableDevices = this.getAvailableDevices();
-		if(!_.isEmpty(availableDevices)) {
-			var fullDeviceIdentifier = this.buildFullDeviceIdentifier(deviceIdentifier);
-			var selectedDevice = availableDevices[fullDeviceIdentifier];
-			if(selectedDevice) {
-				return selectedDevice[0].device;
-			}
+	private get sdks(): ISdk[] {
+		let systemRootClass = $.classDefinition.getClassByName("DTiPhoneSimulatorSystemRoot");
+		let roots = systemRootClass("knownRoots");
+		let count = roots("count");
+
+		let sdks: ISdk[] = [];
+		for(let index=0; index < count; index++) {
+			let root = roots("objectAtIndex", index);
+
+			let displayName = root("sdkDisplayName").toString();
+			let version = root("sdkVersion").toString();
+			let rootPath = root("sdkRootPath").toString();
+
+			sdks.push({ displayName, version, rootPath });
 		}
 
-		errors.fail("Unable to find device with identifier ", deviceIdentifier);
+		return sdks;
+	}
+
+	public sendNotification(notification: string): IFuture<void> {
+		let action = () => {
+			let device = this.getSimulatedDevice();
+			if (!device) {
+				errors.fail("Could not find device.");
+			}
+
+			let result = device("postDarwinNotification", $(notification), "error", null);
+			if (!result) {
+				errors.fail("Could not send notification: " + notification);
+			}
+		};
+
+		return this.execute(action, { canRunMainLoop: false });
+	}
+
+	private get deviceName(): string {
+		return options.device || XCode6Simulator.DEFAULT_DEVICE_IDENTIFIER;
+	}
+
+	private getDeviceByName(): IDevice {
+		let devices = this.getDevices().wait();
+		let device = _.find(devices, (device) => device.name === this.deviceName);
+		if(!device) {
+			errors.fail("Unable to find device with name ", this.deviceName);
+		}
+
+		return device;
 	}
 
 	private buildFullDeviceIdentifier(deviceIdentifier: string): string {

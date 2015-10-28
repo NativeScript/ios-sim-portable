@@ -3,31 +3,32 @@
 
 var yargs = require("yargs");
 
+class OptionType {
+	public static String = "string";
+	public static Boolean = "boolean";
+}
+
 var knownOptions: any = {
-	"debug": Boolean,
-	"exit": Boolean,
-	"device": String,
-	"stdout": String,
-	"stderr": String,
-	"env": String,
-	"args": String,
-	"timeout": String,
-	"help": Boolean,
-	"logging": Boolean,
-	"waitForDebugger": Boolean
+	"debug": { type: OptionType.Boolean },
+	"exit": { type: OptionType.Boolean },
+	"device": { type: OptionType.String },
+	"stdout": { type: OptionType.String },
+	"stderr": { type: OptionType.String },
+	"env": { type: OptionType.String },
+	"args": { type: OptionType.String },
+	"timeout": { type: OptionType.String },
+	"help": { type: OptionType.Boolean },
+	"logging": { type: OptionType.Boolean },
+	"waitForDebugger": { type: OptionType.Boolean },
+	"sdkVersion": { type: OptionType.String }
 };
 
 var parsed: any = {};
+var argv = yargs(process.argv.slice(2)).options(knownOptions).argv;
 
-_.each(_.keys(knownOptions), opt => {
-	var type = knownOptions[opt];
-	if(type === String) {
-		yargs.string(opt);
-	} else if (type === Boolean) {
-		yargs.boolean(opt);
-	}
+// DO NOT REMOVE { } as when they are missing and some of the option values is false, the each stops as it thinks we have set "return false".
+_.each(_.keys(argv), optionName => {
+	parsed[optionName] = argv[optionName]
 });
-
-_.each(_.keys(yargs.argv), opt => parsed[opt] = yargs.argv[opt]);
 
 export = parsed;
