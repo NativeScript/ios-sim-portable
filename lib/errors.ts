@@ -1,7 +1,7 @@
 ///<reference path="./.d.ts"/>
 "use strict";
 
-import util = require("util");
+import * as util from "util";
 
 export function fail(errorMessage: string, ...args: string[]) {
 	args.unshift(errorMessage);
