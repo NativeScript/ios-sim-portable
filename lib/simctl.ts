@@ -114,7 +114,7 @@ export class Simctl implements ISimctl {
 	}
 
 	private simctlExec(command: string, args: string[]): IFuture<any> {
-		args = ["xcrun", "simctl", command, ...args];
-		return childProcess.exec(args.join(" "));
+		args = ["simctl", command, ...args];
+		return childProcess.spawn("xcrun", args);
 	}
 }

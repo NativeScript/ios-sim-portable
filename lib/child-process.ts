@@ -11,7 +11,7 @@ export function exec(command: string): IFuture<any> {
 
 	child_process.exec(command, (error: Error, stdout: NodeBuffer, stderr: NodeBuffer) => {
 		if(error) {
-			errors.fail(`Error ${error.message} while executing ${command}.`);
+			future.throw(new Error(`Error ${error.message} while executing ${command}.`));
 		} else {
 			future.return(stdout ? stdout.toString() : "");
 		}
@@ -44,7 +44,7 @@ export function spawn(command: string, args: string[]): IFuture<string> {
 		if(exitCode === 0) {
 			future.return(capturedOut ? capturedOut.trim() : null);
 		} else {
-			future.throw(util.format("Command %s with arguments %s failed with exit code %s. Error output: \n %s", command, args.join(" "), exitCode, capturedErr));
+			future.throw(new Error(util.format("Command %s with arguments %s failed with exit code %s. Error output:\n %s", command, args.join(" "), exitCode, capturedErr)));
 		}
 	});
 
