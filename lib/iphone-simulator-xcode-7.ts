@@ -41,6 +41,10 @@ export class XCode7Simulator implements ISimulator {
 	public run(applicationPath: string, applicationIdentifier: string): IFuture<void> {
 		return (() => {
 			let device = this.getDeviceToRun().wait();
+			let currentBootedDevice = _.find(this.getDevices().wait(), device => this.isDeviceBooted(device));
+			if(currentBootedDevice && (currentBootedDevice.name.toLowerCase() !== device.name.toLowerCase() || currentBootedDevice.runtimeVersion !== device.runtimeVersion)) {
+				this.killSimulator().wait();
+			}
 
 			if(!this.isDeviceBooted(device)) {
 				this.startSimulator(device).wait();
@@ -117,5 +121,9 @@ export class XCode7Simulator implements ISimulator {
 			let args = [simulatorPath, '--args', '-CurrentDeviceUDID', device.id];
 			childProcess.spawn("open", args).wait();
 		}).future<void>()();
+	}
+
+	private killSimulator(): IFuture<any> {
+		return childProcess.spawn("pkill", ["-9", "-f", "Simulator"]);
 	}
 }
