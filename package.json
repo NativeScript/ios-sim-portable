@@ -1,6 +1,6 @@
 {
   "name": "ios-sim-portable",
-  "version": "1.0.12-beta",
+  "version": "1.0.12-gamma",
   "description": "",
   "main": "./lib/ios-sim.js",
   "scripts": {
@@ -39,6 +39,6 @@
     "typescript": "1.6.2"
   },
   "engines": {
-    "node": ">=0.10.40 <0.11.0 || >=0.12.8 <0.13.0 || >=4.2.1"
+    "node": ">=0.10.40 <0.11.0 || >=0.12.7 <0.13.0 || >=4.2.1 <5.0.0"
   }
 }
