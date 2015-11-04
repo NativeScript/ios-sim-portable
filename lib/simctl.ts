@@ -37,6 +37,10 @@ export class Simctl implements ISimctl {
 		return this.simctlExec("notify_post", [deviceId, notification]);
 	}
 
+	public getAppContainer(deviceId: string, applicationIdentifier: string): IFuture<string> {
+		return this.simctlExec("get_app_container", [deviceId, applicationIdentifier]);
+	}
+
 	public getDevices(): IFuture<IDevice[]> {
 		return (() => {
 			if(!this.devices) {
