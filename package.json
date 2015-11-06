@@ -1,6 +1,6 @@
 {
   "name": "ios-sim-portable",
-  "version": "1.0.13-beta",
+  "version": "1.0.13-gamma",
   "description": "",
   "main": "./lib/ios-sim.js",
   "scripts": {
