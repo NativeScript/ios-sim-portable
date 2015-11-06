@@ -2,6 +2,8 @@
 "use strict";
 
 import Future = require("fibers/future");
+import fs = require("fs");
+import path = require("path");
 import util = require("util");
 require("colors");
 
@@ -20,12 +22,16 @@ export class CommandExecutor implements ICommandExecutor {
 	private executeCore(commandName: string, commandArguments: string[]): IFuture<void> {
 		return (() => {
 			try {
-				var command: ICommand = new (require("./commands/" + commandName).Command)();
-				if(!command) {
-					errors.fail("Unable to resolve commandName %s", commandName);
+				let filePath = path.join(__dirname, "commands", commandName + ".js");
+				if(fs.existsSync(filePath)) {
+					var command: ICommand = new (require(filePath).Command)();
+					if(!command) {
+						errors.fail("Unable to resolve commandName %s", commandName);
+					}
+
+					command.execute(commandArguments).wait();
 				}
 
-				command.execute(commandArguments).wait();
 			} catch(e) {
 				if(options.debug) {
 					throw e;
