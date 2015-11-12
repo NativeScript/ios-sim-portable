@@ -70,6 +70,10 @@ export class XCode7Simulator implements ISimulator {
 		}).future<void>()();
 	}
 
+	public getApplicationPath(deviceId: string, applicationIdentifier: string): IFuture<string> {
+		return this.simctl.getAppContainer(deviceId, applicationIdentifier);
+	}
+
 	private getDeviceToRun(): IFuture<IDevice> {
 		return (() => {
 			let devices = this.simctl.getDevices().wait();

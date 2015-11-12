@@ -7,7 +7,6 @@ import errors = require("./errors");
 import options = require("./options");
 
 export class Simctl implements ISimctl {
-	private devices: IDevice[] = null;
 
 	public launch(deviceId: string, applicationIdentifier: string): IFuture<void> {
 		let args: string[] = [];
@@ -42,16 +41,6 @@ export class Simctl implements ISimctl {
 	}
 
 	public getDevices(): IFuture<IDevice[]> {
-		return (() => {
-			if(!this.devices) {
-				this.devices = this.getDevicesCore().wait();
-			}
-
-			return this.devices;
-		}).future<IDevice[]>()();
-	}
-
-	private getDevicesCore(): IFuture<IDevice[]> {
 		return (() => {
 			let rawDevices = this.simctlExec("list", ["devices"]).wait();
 

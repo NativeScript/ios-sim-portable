@@ -59,6 +59,10 @@ export class XCode5Simulator extends iPhoneSimulatorBaseLib.IPhoneInteropSimulat
 		return Future.fromResult();
 	}
 
+	public getApplicationPath(deviceId: string, applicationIdentifier: string): IFuture<string> {
+		return Future.fromResult("");
+	}
+
 	private get deviceIdentifier(): string {
 		let identifier = options.device || XCode5Simulator.DEFAULT_DEVICE_IDENTIFIER;
 		return XCode5Simulator.allowedDeviceIdentifiers[identifier];

@@ -75,7 +75,7 @@ export class iPhoneSimulator implements IiPhoneSimulator {
 		return this.simulator.sendNotification(notification);
 	}
 
-	private createSimulator(): IFuture<ISimulator> {
+	public createSimulator(): IFuture<ISimulator> {
 		return (() => {
 			let xcodeVersionData = xcode.getXcodeVersionData().wait();
 			let majorVersion = xcodeVersionData.major;

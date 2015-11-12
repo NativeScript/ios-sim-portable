@@ -6,6 +6,7 @@ interface IiPhoneSimulator {
 	printDeviceTypes(): IFuture<void>;
 	printSDKS(): IFuture<void>;
 	sendNotification(notification: string): IFuture<void>;
+	createSimulator(): IFuture<ISimulator>;
 }
 
 interface ICommand {
@@ -31,6 +32,7 @@ interface ISimctl {
 	uninstall(deviceId: string, applicationIdentifier: string): IFuture<void>;
 	notifyPost(deviceId: string, notification: string): IFuture<void>;
 	getDevices(): IFuture<IDevice[]>;
+	getAppContainer(deviceId: string, applicationIdentifier: string): IFuture<string>;
 }
 
 interface IDictionary<T> {
@@ -47,6 +49,7 @@ interface ISimulator {
 	getSdks(): IFuture<ISdk[]>;
 	run(applicationPath: string, applicationIdentifier: string): IFuture<void>;
 	sendNotification(notification: string): IFuture<void>;
+	getApplicationPath(deviceId: string, applicationIdentifier: string): IFuture<string>;
 }
 
 interface IExecuteOptions {
