@@ -42,9 +42,10 @@ Object.defineProperty(global.publicApi, "getRunningSimulator", {
 Object.defineProperty(global.publicApi, "getApplicationPath", {
 	get: () => {
 		return (...args: any[]) => {
-			let libraryPath = require("./simctl");
-			let obj = new libraryPath.Simctl()
-			let result = obj.getAppContainer.apply(obj, args).wait();
+			let libraryPath = require("./iphone-simulator");
+			let obj = new libraryPath.iPhoneSimulator();
+			let simulator = obj.createSimulator().wait();
+			let result = simulator.getApplicationPath.apply(simulator, args).wait();
 			return result;
 		}
 	}
