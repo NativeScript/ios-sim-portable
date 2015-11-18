@@ -27,7 +27,7 @@ interface IDevice {
 }
 
 interface ISimctl {
-	launch(deviceId: string, applicationIdentifier: string): IFuture<void>;
+	launch(deviceId: string, applicationIdentifier: string): IFuture<string>;
 	install(deviceId: string, applicationPath: string): IFuture<void>;
 	uninstall(deviceId: string, applicationIdentifier: string): IFuture<void>;
 	notifyPost(deviceId: string, notification: string): IFuture<void>;

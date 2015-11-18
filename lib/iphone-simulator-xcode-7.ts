@@ -11,6 +11,7 @@ import util = require("util");
 import utils = require("./utils");
 import xcode = require("./xcode");
 var $ = require("NodObjC");
+var osenv = require("osenv");
 
 export class XCode7Simulator implements ISimulator {
 	private static DEVICE_IDENTIFIER_PREFIX = "com.apple.CoreSimulator.SimDeviceType";
@@ -55,7 +56,31 @@ export class XCode7Simulator implements ISimulator {
 			}
 
 			this.simctl.install(device.id, applicationPath).wait();
-			this.simctl.launch(device.id, applicationIdentifier).wait();
+			let launchResult = this.simctl.launch(device.id, applicationIdentifier).wait();
+
+			if (options.logging) {
+				let pid = launchResult.split(":")[1].trim();
+				let logFilePath = path.join(osenv.home(), "Library", "Logs", "CoreSimulator", device.id, "system.log");
+
+				let childProcess = require("child_process").spawn("tail", ['-f', '-n', '1', logFilePath]);
+				if(childProcess.stdout) {
+					childProcess.stdout.on("data", (data: NodeBuffer) => {
+						let dataAsString = data.toString();
+						if (dataAsString.indexOf(`[${pid}]`) > -1) {
+							console.log(dataAsString);
+						}
+					});
+				}
+
+				if(childProcess.stderr) {
+					childProcess.stderr.on("data", (data: string) => {
+						let dataAsString = data.toString();
+						if (dataAsString.indexOf(`[${pid}]`) > -1) {
+							console.error(dataAsString);
+						}
+					});
+				}
+			}
 		}).future<void>()();
 	}
 

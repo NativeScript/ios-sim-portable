@@ -8,9 +8,9 @@ import options = require("./options");
 
 export class Simctl implements ISimctl {
 
-	public launch(deviceId: string, applicationIdentifier: string): IFuture<void> {
+	public launch(deviceId: string, applicationIdentifier: string): IFuture<string> {
 		let args: string[] = [];
-		if(options.waitForDebugger) {
+		if (options.waitForDebugger) {
 			args.push("-w");
 		}
 
