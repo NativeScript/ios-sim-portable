@@ -37,7 +37,16 @@ export class Simctl implements ISimctl {
 	}
 
 	public getAppContainer(deviceId: string, applicationIdentifier: string): IFuture<string> {
-		return this.simctlExec("get_app_container", [deviceId, applicationIdentifier]);
+		return (() => {
+			try {
+				return this.simctlExec("get_app_container", [deviceId, applicationIdentifier]).wait();
+			} catch(e) {
+				if (e.message.indexOf("No such file or directory") > -1) {
+					return null;
+				}
+				throw e;
+			}
+		}).future<string>()();
 	}
 
 	public getDevices(): IFuture<IDevice[]> {
