@@ -25,7 +25,7 @@ export class Simctl implements ISimctl {
 			let result = this.simctlExec("launch", args).wait();
 
 			if (options.waitForDebugger) {
-				console.log(`${applicationIdentifier}: ${applicationIdentifier}`);
+				console.log(`${applicationIdentifier}: ${result}`);
 			}
 
 			return result;
