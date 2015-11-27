@@ -55,6 +55,7 @@ interface ISimulator {
 interface IExecuteOptions {
 	canRunMainLoop: boolean;
 	appPath?: string;
+	applicationIdentifier?: string;
 }
 
 interface ISdk {

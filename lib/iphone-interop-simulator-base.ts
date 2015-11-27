@@ -26,11 +26,11 @@ export class IPhoneInteropSimulatorBase {
 
 	private static DEFAULT_TIMEOUT_IN_SECONDS = 90;
 
-	public run(appPath: string): IFuture<void> {
-		return this.execute(this.launch, { canRunMainLoop: true, appPath: appPath });
+	public run(appPath: string, applicationIdentifier: string): IFuture<void> {
+		return this.execute(this.launch, { canRunMainLoop: true, appPath: appPath, applicationIdentifier: applicationIdentifier });
 	}
-	
-	private setupSessionDelegate(appPath: string): any {
+
+	private setupSessionDelegate(appPath: string, applicationIdentifier: string): any {
 		let sessionDelegate = $.NSObject.extend("DTiPhoneSimulatorSessionDelegate");
 		sessionDelegate.addMethod("session:didEndWithError:", "v@:@@", function(self: any, sel: any, sess: any, error: any) {
 			IPhoneInteropSimulatorBase.logSessionInfo(error, "Session ended without errors.", "Session ended with error ");
@@ -39,16 +39,16 @@ export class IPhoneInteropSimulatorBase {
 		sessionDelegate.addMethod("session:didStart:withError:", "v@:@c@", function(self: any, sel: string, session: any, started: boolean, error:any) {
 			IPhoneInteropSimulatorBase.logSessionInfo(error, "Session started without errors.", "Session started with error ");
 
-			console.log(`${appPath}: ${session("simulatedApplicationPID")}`);
+			console.log(`${applicationIdentifier}: ${session("simulatedApplicationPID")}`);
 			if (options.exit) {
 				process.exit(0);
 			}
 		});
 		sessionDelegate.register();
-		
+
 		return sessionDelegate;
 	}
-	
+
 	private getTimeout(): number {
 		let timeoutParam = IPhoneInteropSimulatorBase.DEFAULT_TIMEOUT_IN_SECONDS;
 		if (options.timeout || options.timeout === 0) {
@@ -62,7 +62,7 @@ export class IPhoneInteropSimulatorBase {
 		}
 		return timeoutParam;
 	}
-	
+
 	private validateDevice() {
 		if (options.device) {
 			let devices = this.simulator.getDevices().wait();
@@ -73,8 +73,8 @@ export class IPhoneInteropSimulatorBase {
 		}
 	}
 
-	private launch(appPath: string): void {
-		let sessionDelegate = this.setupSessionDelegate(appPath);
+	private launch(appPath: string, applicationIdentifier: string): void {
+		let sessionDelegate = this.setupSessionDelegate(appPath, applicationIdentifier);
 
 		let appSpec = this.getClassByName("DTiPhoneSimulatorApplicationSpecifier")("specifierWithApplicationPath", $(appPath));
 		let config = this.getClassByName("DTiPhoneSimulatorSessionConfig")("alloc")("init")("autorelease");
@@ -125,7 +125,7 @@ export class IPhoneInteropSimulatorBase {
 		}
 	}
 
-	protected execute(action: (appPath?: string) => any, opts: IExecuteOptions): IFuture<any> {
+	protected execute(action: (appPath?: string, applicationIdentifier?: string) => any, opts: IExecuteOptions): IFuture<any> {
 		$.importFramework(IPhoneInteropSimulatorBase.FOUNDATION_FRAMEWORK_NAME);
 		$.importFramework(IPhoneInteropSimulatorBase.APPKIT_FRAMEWORK_NAME);
 
@@ -136,14 +136,14 @@ export class IPhoneInteropSimulatorBase {
 
 		this.loadFrameworks(developerDirectoryPath);
 
-		let result = action.apply(this, [opts.appPath]);
+		let result = action.apply(this, [opts.appPath, opts.applicationIdentifier]);
 		return this.runCFLoop(opts.canRunMainLoop, result);
 	}
-	
+
 	private runCFLoop(canRunMainLoop: boolean, result: any): IFuture<any> {
 		let pool = $.NSAutoreleasePool("alloc")("init");
 		let future = new Future<any>();
-		
+
 		if (canRunMainLoop) {
 			// Keeps the Node loop running
 			(function runLoop() {
@@ -157,7 +157,7 @@ export class IPhoneInteropSimulatorBase {
 		} else {
 			future.return(result);
 		}
-		
+
 		return future;
 	}
 

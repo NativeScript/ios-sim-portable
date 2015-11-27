@@ -9,19 +9,28 @@ import options = require("./options");
 export class Simctl implements ISimctl {
 
 	public launch(deviceId: string, applicationIdentifier: string): IFuture<string> {
-		let args: string[] = [];
-		if (options.waitForDebugger) {
-			args.push("-w");
-		}
+		return (() => {
+			let args: string[] = [];
+			if (options.waitForDebugger) {
+				args.push("-w");
+			}
 
-		args = args.concat([deviceId, applicationIdentifier]);
+			args = args.concat([deviceId, applicationIdentifier]);
 
-		if(options.args) {
-			let applicationArgs = options.args.trim().split(/\s+/);
-			_.each(applicationArgs, (arg: string) => args.push(arg));
-		}
+			if(options.args) {
+				let applicationArgs = options.args.trim().split(/\s+/);
+				_.each(applicationArgs, (arg: string) => args.push(arg));
+			}
 
-		return this.simctlExec("launch", args);
+			let result = this.simctlExec("launch", args).wait();
+
+			if (options.waitForDebugger) {
+				console.log(`${applicationIdentifier}: ${applicationIdentifier}`);
+			}
+
+			return result;
+
+		}).future<string>()();
 	}
 
 	public install(deviceId: string, applicationPath: string): IFuture<void> {
