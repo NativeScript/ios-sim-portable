@@ -8,14 +8,14 @@ import options = require("./options");
 
 export class Simctl implements ISimctl {
 
-	public launch(deviceId: string, applicationIdentifier: string): IFuture<string> {
+	public launch(deviceId: string, appIdentifier: string): IFuture<string> {
 		return (() => {
 			let args: string[] = [];
 			if (options.waitForDebugger) {
 				args.push("-w");
 			}
 
-			args = args.concat([deviceId, applicationIdentifier]);
+			args = args.concat([deviceId, appIdentifier]);
 
 			if(options.args) {
 				let applicationArgs = options.args.trim().split(/\s+/);
@@ -25,7 +25,7 @@ export class Simctl implements ISimctl {
 			let result = this.simctlExec("launch", args).wait();
 
 			if (options.waitForDebugger) {
-				console.log(`${applicationIdentifier}: ${result}`);
+				console.log(`${appIdentifier}: ${result}`);
 			}
 
 			return result;
@@ -37,18 +37,18 @@ export class Simctl implements ISimctl {
 		return this.simctlExec("install", [deviceId, applicationPath]);
 	}
 
-	public uninstall(deviceId: string, applicationIdentifier: string): IFuture<void> {
-		return this.simctlExec("uninstall", [deviceId, applicationIdentifier]);
+	public uninstall(deviceId: string, appIdentifier: string, opts?: any): IFuture<void> {
+		return this.simctlExec("uninstall", [deviceId, appIdentifier], opts);
 	}
 
 	public notifyPost(deviceId: string, notification: string): IFuture<void> {
 		return this.simctlExec("notify_post", [deviceId, notification]);
 	}
 
-	public getAppContainer(deviceId: string, applicationIdentifier: string): IFuture<string> {
+	public getAppContainer(deviceId: string, appIdentifier: string): IFuture<string> {
 		return (() => {
 			try {
-				return this.simctlExec("get_app_container", [deviceId, applicationIdentifier]).wait();
+				return this.simctlExec("get_app_container", [deviceId, appIdentifier]).wait();
 			} catch(e) {
 				if (e.message.indexOf("No such file or directory") > -1) {
 					return null;
@@ -124,8 +124,8 @@ export class Simctl implements ISimctl {
 		}).future<IDevice[]>()();
 	}
 
-	private simctlExec(command: string, args: string[]): IFuture<any> {
+	private simctlExec(command: string, args: string[], opts?: any): IFuture<any> {
 		args = ["simctl", command, ...args];
-		return childProcess.spawn("xcrun", args);
+		return childProcess.spawn("xcrun", args, opts);
 	}
 }

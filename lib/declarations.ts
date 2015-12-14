@@ -29,7 +29,7 @@ interface IDevice {
 interface ISimctl {
 	launch(deviceId: string, applicationIdentifier: string): IFuture<string>;
 	install(deviceId: string, applicationPath: string): IFuture<void>;
-	uninstall(deviceId: string, applicationIdentifier: string): IFuture<void>;
+	uninstall(deviceId: string, applicationIdentifier: string, opts?: any): IFuture<void>;
 	notifyPost(deviceId: string, notification: string): IFuture<void>;
 	getDevices(): IFuture<IDevice[]>;
 	getAppContainer(deviceId: string, applicationIdentifier: string): IFuture<string>;
@@ -50,6 +50,19 @@ interface ISimulator {
 	run(applicationPath: string, applicationIdentifier: string): IFuture<void>;
 	sendNotification(notification: string): IFuture<void>;
 	getApplicationPath(deviceId: string, applicationIdentifier: string): IFuture<string>;
+	getInstalledApplications(deviceId: string): IFuture<IApplication[]>;
+	installApplication(deviceId: string, applicationPath: string): IFuture<void>;
+	uninstallApplication(deviceId: string, appIdentifier: string): IFuture<void>;
+	startApplication(deviceId: string, appIdentifier: string): IFuture<string>;
+	stopApplication(deviceId: string, appIdentifier: string): IFuture<string>;
+	printDeviceLog(deviceId: string): void;
+	startSimulator(): IFuture<void>;
+}
+
+interface IApplication {
+	guid: string;
+	appIdentifier: string;
+	path: string;
 }
 
 interface IExecuteOptions {
