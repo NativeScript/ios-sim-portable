@@ -10,7 +10,7 @@ import { Simctl } from "./simctl";
 import util = require("util");
 import utils = require("./utils");
 import xcode = require("./xcode");
-var $ = require("NodObjC");
+var $ = require("nodobjc");
 var osenv = require("osenv");
 
 export class XCode7Simulator implements ISimulator {
