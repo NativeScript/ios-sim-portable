@@ -67,7 +67,7 @@ export class XCode7Simulator implements ISimulator {
 					childProcess.stdout.on("data", (data: NodeBuffer) => {
 						let dataAsString = data.toString();
 						if (dataAsString.indexOf(`[${pid}]`) > -1) {
-							console.log(dataAsString);
+							process.stdout.write(dataAsString);
 						}
 					});
 				}
@@ -76,7 +76,7 @@ export class XCode7Simulator implements ISimulator {
 					childProcess.stderr.on("data", (data: string) => {
 						let dataAsString = data.toString();
 						if (dataAsString.indexOf(`[${pid}]`) > -1) {
-							console.error(dataAsString);
+							process.stdout.write(dataAsString);
 						}
 					});
 				}
