@@ -43,13 +43,13 @@ export function printDeviceLog(deviceId: string): void {
 	let childProcess = require("child_process").spawn("tail", ['-f', '-n', '1', logFilePath]);
 	if (childProcess.stdout) {
 		childProcess.stdout.on("data", (data: NodeBuffer) => {
-			console.log(data.toString());
+			process.stdout.write(data.toString());
 		});
 	}
 
 	if (childProcess.stderr) {
 		childProcess.stderr.on("data", (data: string) => {
-			console.error(data.toString());
+			process.stdout.write(data.toString());
 		});
 	}
 }

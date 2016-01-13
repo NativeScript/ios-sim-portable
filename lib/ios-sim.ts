@@ -16,12 +16,9 @@ var fiber = Fiber(() => {
 fiber.run();
 
 function getSimulator(): IFuture<ISimulator> {
-	return (() => {
-		let libraryPath = require("./iphone-simulator");
-		let obj = new libraryPath.iPhoneSimulator();
-		let simulator = obj.createSimulator().wait();
-		return simulator;
-	}).future<ISimulator>()();
+	let libraryPath = require("./iphone-simulator");
+	let obj = new libraryPath.iPhoneSimulator();
+	return obj.createSimulator();
 }
 
 global.publicApi = {};
@@ -64,7 +61,6 @@ Object.defineProperty(global.publicApi, "getInstalledApplications", {
 			let simulator = getSimulator().wait();
 			let installedApplications: IApplication[] = simulator.getInstalledApplications.apply(simulator, args).wait();
 			let result = _.map(installedApplications, application => application.appIdentifier);
-			console.log("RESULT!!!!! ", result);
 			return result;
 		}
 	}

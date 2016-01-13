@@ -110,11 +110,10 @@ export class XCode7Simulator implements ISimulator {
 		return this.simctl.launch(deviceId, appIdentifier);
 	}
 
-	public stopApplication(deviceId: string, appIdentifier: string): IFuture<string> {
+	public stopApplication(deviceId: string, cfBundleExecutable: string): IFuture<string> {
 		try {
-			return childProcess.exec(`killall ${appIdentifier.split(".")[2]}`, {skipError: true});
+			return childProcess.exec(`killall ${cfBundleExecutable}`, {skipError: true});
 		} catch(e) {
-			//this.$logger.trace("Unable to kill simulator: " + e);
 		}
 	}
 

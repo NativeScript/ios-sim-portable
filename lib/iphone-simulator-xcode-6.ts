@@ -73,11 +73,10 @@ export class XCode6Simulator extends iPhoneSimulatorBaseLib.IPhoneInteropSimulat
 		return this.simctl.launch(deviceId, appIdentifier);
 	}
 
-	public stopApplication(deviceId: string, appIdentifier: string): IFuture<string> {
+	public stopApplication(deviceId: string, cfBundleExecutable: string): IFuture<string> {
 		try {
-			return childProcess.exec(`killall ${appIdentifier.split(".")[2]}.app`);
+			return childProcess.exec(`killall ${cfBundleExecutable}.app`);
 		} catch(e) {
-			//this.$logger.trace("Unable to kill simulator: " + e);
 		}
 	}
 
