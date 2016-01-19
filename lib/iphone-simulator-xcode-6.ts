@@ -1,15 +1,18 @@
 ///<reference path="./.d.ts"/>
 "use strict";
+import childProcess = require("./child-process");
 import * as errors from "./errors";
 import * as options from "./options";
 import * as utils from "./utils";
-import * as fs from "fs";
+
 import Future = require("fibers/future");
+import * as fs from "fs";
 import * as path from "path";
 import * as util from "util";
 import * as os from "os";
+import common = require("./iphone-simulator-common");
+import { Simctl } from "./simctl";
 let $ = require("nodobjc");
-let bplistParser = require("bplist-parser");
 let osenv = require("osenv");
 
 import iPhoneSimulatorBaseLib = require("./iphone-interop-simulator-base");
@@ -20,11 +23,13 @@ export class XCode6Simulator extends iPhoneSimulatorBaseLib.IPhoneInteropSimulat
 	private static DEFAULT_DEVICE_IDENTIFIER = "iPhone-4s";
 
 	private cachedDevices: IDevice[];
+	private simctl: ISimctl;
 
 	constructor() {
 		super(this);
 
 		this.cachedDevices = null;
+		this.simctl = new Simctl();
 	}
 
 	public setSimulatedDevice(config: any): void {
@@ -46,38 +51,42 @@ export class XCode6Simulator extends iPhoneSimulatorBaseLib.IPhoneInteropSimulat
 
 	public getApplicationPath(deviceId: string, applicationIdentifier: string): IFuture<string> {
 		return (() => {
-			let rootApplicationsPath = path.join(osenv.home(), `/Library/Developer/CoreSimulator/Devices/${deviceId}/data/Containers/Bundle/Application`);
-			if(!fs.existsSync(rootApplicationsPath)) {
-				rootApplicationsPath = path.join(osenv.home(), `/Library/Developer/CoreSimulator/Devices/${deviceId}/data/Applications`);
-			}
-			let applicationGuids = fs.readdirSync(rootApplicationsPath);
-			let result: string = null;
-			_.each(applicationGuids, applicationGuid => {
-				let fullApplicationPath = path.join(rootApplicationsPath, applicationGuid);
-				let applicationDirContents = fs.readdirSync(fullApplicationPath);
-				let applicationName = _.find(applicationDirContents, fileName => path.extname(fileName) === ".app");
-				let plistFilePath = path.join(fullApplicationPath, applicationName, "Info.plist");
-				let applicationData = this.parseFile(plistFilePath).wait();
-				if(applicationData[0].CFBundleIdentifier === applicationIdentifier) {
-					result = path.join(fullApplicationPath, applicationName);
-					return false;
-				}
-			});
-
-			return result;
+			let applications = this.getInstalledApplications(deviceId).wait();
+			let application = _.find(applications, app => app.appIdentifier === applicationIdentifier);
+			return application ? application.path : null;
 		}).future<string>()();
 	}
 
-	private parseFile(plistFilePath: string): IFuture<any> {
-		let future = new Future<any>();
-		bplistParser.parseFile(plistFilePath, (err: Error, obj: any) => {
-			if(err) {
-				future.throw(err);
-			} else {
-				future.return(obj);
-			}
-		});
-		return future;
+	public getInstalledApplications(deviceId: string): IFuture<IApplication[]> {
+		return common.getInstalledApplications(deviceId);
+	}
+
+	public installApplication(deviceId: string, applicationPath: string): IFuture<void> {
+		return this.simctl.install(deviceId, applicationPath);
+	}
+
+	public uninstallApplication(deviceId: string, appIdentifier: string): IFuture<void> {
+		return this.simctl.uninstall(deviceId, appIdentifier);
+	}
+
+	public startApplication(deviceId: string, appIdentifier: string): IFuture<string> {
+		return this.simctl.launch(deviceId, appIdentifier);
+	}
+
+	public stopApplication(deviceId: string, cfBundleExecutable: string): IFuture<string> {
+		try {
+			return childProcess.exec(`killall ${cfBundleExecutable}.app`);
+		} catch(e) {
+		}
+	}
+
+	public printDeviceLog(deviceId: string): void {
+		common.printDeviceLog(deviceId);
+	}
+
+	public startSimulator(): IFuture<void> {
+		let device = this.devices[0];
+		return common.startSimulator(device.id);
 	}
 
 	private get devices(): IDevice[] {

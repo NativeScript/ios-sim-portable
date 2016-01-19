@@ -15,6 +15,12 @@ var fiber = Fiber(() => {
 
 fiber.run();
 
+function getSimulator(): IFuture<ISimulator> {
+	let libraryPath = require("./iphone-simulator");
+	let obj = new libraryPath.iPhoneSimulator();
+	return obj.createSimulator();
+}
+
 global.publicApi = {};
 
 Object.defineProperty(global.publicApi, "getRunningSimulator", {
@@ -42,14 +48,76 @@ Object.defineProperty(global.publicApi, "getRunningSimulator", {
 Object.defineProperty(global.publicApi, "getApplicationPath", {
 	get: () => {
 		return (...args: any[]) => {
-			let libraryPath = require("./iphone-simulator");
-			let obj = new libraryPath.iPhoneSimulator();
-			let simulator = obj.createSimulator().wait();
+			let simulator = getSimulator().wait();
 			let result = simulator.getApplicationPath.apply(simulator, args).wait();
 			return result;
 		}
 	}
 });
 
+Object.defineProperty(global.publicApi, "getInstalledApplications", {
+	get: () => {
+		return (...args: any[]) => {
+			let simulator = getSimulator().wait();
+			let installedApplications: IApplication[] = simulator.getInstalledApplications.apply(simulator, args).wait();
+			let result = _.map(installedApplications, application => application.appIdentifier);
+			return result;
+		}
+	}
+});
+
+Object.defineProperty(global.publicApi, "installApplication", {
+	get: () => {
+		return (...args: any[]) => {
+			let simulator = getSimulator().wait();
+			return simulator.installApplication.apply(simulator, args);
+		}
+	}
+});
+
+Object.defineProperty(global.publicApi, "uninstallApplication", {
+	get: () => {
+		return (...args: any[]) => {
+			let simulator = getSimulator().wait();
+			return simulator.uninstallApplication.apply(simulator, args);
+		}
+	}
+});
+
+Object.defineProperty(global.publicApi, "startApplication", {
+	get: () => {
+		return (...args: any[]) => {
+			let simulator = getSimulator().wait();
+			return simulator.startApplication.apply(simulator, args);
+		}
+	}
+});
+
+Object.defineProperty(global.publicApi, "stopApplication", {
+	get: () => {
+		return (...args: any[]) => {
+			let simulator = getSimulator().wait();
+			return simulator.stopApplication.apply(simulator, args);
+		}
+	}
+});
+
+Object.defineProperty(global.publicApi, "printDeviceLog", {
+	get: () => {
+		return (...args: any[]) => {
+			let simulator = getSimulator().wait();
+			return simulator.printDeviceLog.apply(simulator, args);
+		}
+	}
+});
+
+Object.defineProperty(global.publicApi, "startSimulator", {
+	get: () => {
+		return (...args: any[]) => {
+			let simulator = getSimulator().wait();
+			return simulator.startSimulator.apply(simulator, args);
+		}
+	}
+});
 
 module.exports = global.publicApi;

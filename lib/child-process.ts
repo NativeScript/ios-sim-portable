@@ -6,12 +6,16 @@ import * as errors from "./errors";
 import Future = require("fibers/future");
 import * as util from "util";
 
-export function exec(command: string): IFuture<any> {
+export function exec(command: string, opts?: any): IFuture<any> {
 	var future = new Future<any>();
 
 	child_process.exec(command, (error: Error, stdout: NodeBuffer, stderr: NodeBuffer) => {
 		if(error) {
-			future.throw(new Error(`Error ${error.message} while executing ${command}.`));
+			if (opts && opts.skipError) {
+				future.return(error);
+			} else {
+				future.throw(new Error(`Error ${error.message} while executing ${command}.`));
+			}
 		} else {
 			future.return(stdout ? stdout.toString() : "");
 		}
@@ -20,7 +24,7 @@ export function exec(command: string): IFuture<any> {
 	return future;
 }
 
-export function spawn(command: string, args: string[]): IFuture<string> {
+export function spawn(command: string, args: string[], opts?: any): IFuture<string> {
 	let future = new Future<string>();
 	let capturedOut = "";
 	let capturedErr = "";
@@ -44,7 +48,11 @@ export function spawn(command: string, args: string[]): IFuture<string> {
 		if(exitCode === 0) {
 			future.return(capturedOut ? capturedOut.trim() : null);
 		} else {
-			future.throw(new Error(util.format("Command %s with arguments %s failed with exit code %s. Error output:\n %s", command, args.join(" "), exitCode, capturedErr)));
+			if (opts && opts.skipError) {
+				future.return(capturedErr);
+			} else {
+				future.throw(new Error(util.format("Command %s with arguments %s failed with exit code %s. Error output:\n %s", command, args.join(" "), exitCode, capturedErr)));
+			}
 		}
 	});
 

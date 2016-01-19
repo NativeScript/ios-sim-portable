@@ -4,6 +4,7 @@
 import childProcess = require("./child-process");
 import errors = require("./errors");
 
+import common = require("./iphone-simulator-common");
 import options = require("./options");
 import path = require("path");
 import { Simctl } from "./simctl";
@@ -47,13 +48,7 @@ export class XCode7Simulator implements ISimulator {
 				this.killSimulator().wait();
 			}
 
-			if(!this.isDeviceBooted(device)) {
-				this.startSimulator(device).wait();
-				// startSimulaltor doesn't always finish immediately, and the subsequent
-				// install fails since the simulator is not running.
-				// Give it some time to start before we attempt installing.
-				utils.sleep(1000);
-			}
+			this.startSimulator(device).wait();
 
 			this.simctl.install(device.id, applicationPath).wait();
 			let launchResult = this.simctl.launch(device.id, applicationIdentifier).wait();
@@ -97,6 +92,33 @@ export class XCode7Simulator implements ISimulator {
 
 	public getApplicationPath(deviceId: string, applicationIdentifier: string): IFuture<string> {
 		return this.simctl.getAppContainer(deviceId, applicationIdentifier);
+	}
+
+	public getInstalledApplications(deviceId: string): IFuture<IApplication[]> {
+		return common.getInstalledApplications(deviceId);
+	}
+
+	public installApplication(deviceId: string, applicationPath: string): IFuture<void> {
+		return this.simctl.install(deviceId, applicationPath);
+	}
+
+	public uninstallApplication(deviceId: string, appIdentifier: string): IFuture<void> {
+		return this.simctl.uninstall(deviceId, appIdentifier, {skipError: true});
+	}
+
+	public startApplication(deviceId: string, appIdentifier: string): IFuture<string> {
+		return this.simctl.launch(deviceId, appIdentifier);
+	}
+
+	public stopApplication(deviceId: string, cfBundleExecutable: string): IFuture<string> {
+		try {
+			return childProcess.exec(`killall ${cfBundleExecutable}`, {skipError: true});
+		} catch(e) {
+		}
+	}
+
+	public printDeviceLog(deviceId: string): void {
+		common.printDeviceLog(deviceId);
 	}
 
 	private getDeviceToRun(): IFuture<IDevice> {
@@ -144,11 +166,16 @@ export class XCode7Simulator implements ISimulator {
 		}).future<IDevice>()();
 	}
 
-	private startSimulator(device: IDevice): IFuture<void> {
+	public startSimulator(device?: IDevice): IFuture<void> {
 		return (() => {
-			let simulatorPath = path.resolve(xcode.getPathFromXcodeSelect().wait(), "Applications", "Simulator.app");
-			let args = [simulatorPath, '--args', '-CurrentDeviceUDID', device.id];
-			childProcess.spawn("open", args).wait();
+			device = device || this.getDeviceToRun().wait();
+			if (!this.isDeviceBooted(device)) {
+				common.startSimulator(device.id).wait();
+				// startSimulaltor doesn't always finish immediately, and the subsequent
+				// install fails since the simulator is not running.
+				// Give it some time to start before we attempt installing.
+				utils.sleep(1000);
+			}
 		}).future<void>()();
 	}
 
