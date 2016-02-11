@@ -80,8 +80,8 @@ export class XCode6Simulator extends iPhoneSimulatorBaseLib.IPhoneInteropSimulat
 		}
 	}
 
-	public printDeviceLog(deviceId: string): void {
-		common.printDeviceLog(deviceId);
+	public printDeviceLog(deviceId: string, launchResult?: string): void {
+		common.printDeviceLog(deviceId, launchResult);
 	}
 
 	public startSimulator(): IFuture<void> {

@@ -54,27 +54,7 @@ export class XCode7Simulator implements ISimulator {
 			let launchResult = this.simctl.launch(device.id, applicationIdentifier).wait();
 
 			if (options.logging) {
-				let pid = launchResult.split(":")[1].trim();
-				let logFilePath = path.join(osenv.home(), "Library", "Logs", "CoreSimulator", device.id, "system.log");
-
-				let childProcess = require("child_process").spawn("tail", ['-f', '-n', '1', logFilePath]);
-				if(childProcess.stdout) {
-					childProcess.stdout.on("data", (data: NodeBuffer) => {
-						let dataAsString = data.toString();
-						if (dataAsString.indexOf(`[${pid}]`) > -1) {
-							process.stdout.write(dataAsString);
-						}
-					});
-				}
-
-				if(childProcess.stderr) {
-					childProcess.stderr.on("data", (data: string) => {
-						let dataAsString = data.toString();
-						if (dataAsString.indexOf(`[${pid}]`) > -1) {
-							process.stdout.write(dataAsString);
-						}
-					});
-				}
+				this.printDeviceLog(device.id, launchResult);
 			}
 		}).future<void>()();
 	}
@@ -117,8 +97,8 @@ export class XCode7Simulator implements ISimulator {
 		}
 	}
 
-	public printDeviceLog(deviceId: string): void {
-		common.printDeviceLog(deviceId);
+	public printDeviceLog(deviceId: string, launchResult?: string): void {
+		common.printDeviceLog(deviceId, launchResult);
 	}
 
 	private getDeviceToRun(): IFuture<IDevice> {

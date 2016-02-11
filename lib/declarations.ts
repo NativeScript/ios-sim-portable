@@ -55,7 +55,7 @@ interface ISimulator {
 	uninstallApplication(deviceId: string, appIdentifier: string): IFuture<void>;
 	startApplication(deviceId: string, appIdentifier: string): IFuture<string>;
 	stopApplication(deviceId: string, appIdentifier: string): IFuture<string>;
-	printDeviceLog(deviceId: string): void;
+	printDeviceLog(deviceId: string, launchResult?: string): void;
 	startSimulator(): IFuture<void>;
 }
 
