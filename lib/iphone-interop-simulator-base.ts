@@ -11,9 +11,12 @@ import * as path from "path";
 import * as util from "util";
 import * as utils from "./utils";
 let $ = require("nodobjc");
+import {IPhoneSimulatorNameGetter} from "./iphone-simulator-name-getter";
 
-export class IPhoneInteropSimulatorBase {
-	constructor(private simulator: IInteropSimulator) { }
+export class IPhoneInteropSimulatorBase extends IPhoneSimulatorNameGetter {
+	constructor(private simulator: IInteropSimulator) {
+		super();
+	}
 
 	private static FOUNDATION_FRAMEWORK_NAME = "Foundation";
 	private static APPKIT_FRAMEWORK_NAME = "AppKit";

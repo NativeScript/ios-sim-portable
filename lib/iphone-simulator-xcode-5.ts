@@ -12,12 +12,12 @@ var $ = require("nodobjc");
 import iPhoneSimulatorBaseLib = require("./iphone-interop-simulator-base");
 
 export class XCode5Simulator extends iPhoneSimulatorBaseLib.IPhoneInteropSimulatorBase implements IInteropSimulator {
+	public defaultDeviceIdentifier: string;
 
 	constructor() {
 		super(this);
+		this.defaultDeviceIdentifier = "iPhone"
 	}
-
-	private static DEFAULT_DEVICE_IDENTIFIER = "iPhone";
 
 	private static allowedDeviceIdentifiers: IDictionary<string> = {
 		"iPhone": "iPhone",
@@ -90,7 +90,6 @@ export class XCode5Simulator extends iPhoneSimulatorBaseLib.IPhoneInteropSimulat
 	}
 
 	private get deviceIdentifier(): string {
-		let identifier = options.device || XCode5Simulator.DEFAULT_DEVICE_IDENTIFIER;
-		return XCode5Simulator.allowedDeviceIdentifiers[identifier];
+		return XCode5Simulator.allowedDeviceIdentifiers[this.getSimulatorName()];
 	}
 }

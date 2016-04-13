@@ -11,16 +11,17 @@ import { Simctl } from "./simctl";
 import util = require("util");
 import utils = require("./utils");
 import xcode = require("./xcode");
-var $ = require("nodobjc");
-var osenv = require("osenv");
 
-export class XCode7Simulator implements ISimulator {
+import {IPhoneSimulatorNameGetter} from "./iphone-simulator-name-getter";
+
+export class XCode7Simulator extends IPhoneSimulatorNameGetter implements ISimulator {
 	private static DEVICE_IDENTIFIER_PREFIX = "com.apple.CoreSimulator.SimDeviceType";
-	private static DEFAULT_DEVICE_NAME = "iPhone 6";
+	public defaultDeviceIdentifier = "iPhone 6";
 
 	private simctl: ISimctl = null;
 
 	constructor() {
+		super();
 		this.simctl = new Simctl();
 	}
 
@@ -123,7 +124,7 @@ export class XCode7Simulator implements ISimulator {
 			});
 
 			if(!result) {
-				result = _.find(devices, (device: IDevice) => device.name === XCode7Simulator.DEFAULT_DEVICE_NAME);
+				result = _.find(devices, (device: IDevice) => device.name === this.defaultDeviceIdentifier);
 			}
 
 			if(!result) {

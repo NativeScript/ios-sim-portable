@@ -19,8 +19,9 @@ import iPhoneSimulatorBaseLib = require("./iphone-interop-simulator-base");
 
 export class XCode6Simulator extends iPhoneSimulatorBaseLib.IPhoneInteropSimulatorBase implements IInteropSimulator {
 
+	public defaultDeviceIdentifier: string;
+
 	private static DEVICE_IDENTIFIER_PREFIX = "com.apple.CoreSimulator.SimDeviceType";
-	private static DEFAULT_DEVICE_IDENTIFIER = "iPhone-4s";
 
 	private cachedDevices: IDevice[];
 	private simctl: ISimctl;
@@ -28,6 +29,7 @@ export class XCode6Simulator extends iPhoneSimulatorBaseLib.IPhoneInteropSimulat
 	constructor() {
 		super(this);
 
+		this.defaultDeviceIdentifier = "iPhone-4s";
 		this.cachedDevices = null;
 		this.simctl = new Simctl();
 	}
@@ -155,15 +157,11 @@ export class XCode6Simulator extends iPhoneSimulatorBaseLib.IPhoneInteropSimulat
 		return this.execute(action, { canRunMainLoop: false });
 	}
 
-	private get deviceName(): string {
-		return options.device || XCode6Simulator.DEFAULT_DEVICE_IDENTIFIER;
-	}
-
 	private getDeviceByName(): IDevice {
 		let devices = this.getDevices().wait();
-		let device = _.find(devices, (device) => device.name === this.deviceName);
+		let device = _.find(devices, (device) => device.name === this.getSimulatorName());
 		if(!device) {
-			errors.fail("Unable to find device with name ", this.deviceName);
+			errors.fail("Unable to find device with name ", this.getSimulatorName());
 		}
 
 		return device;
