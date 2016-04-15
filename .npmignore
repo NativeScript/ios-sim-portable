@@ -10,6 +10,5 @@ tscommand.tmp.txt
 bin/ios-sim-portable
 bin/*.cmd
 
-lib/**/*.tsp
-lib/**/*.js.map
-/usr/local/bin/appbuilder copy
+**/*.ts
+**/*.js.map
