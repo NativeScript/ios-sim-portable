@@ -60,7 +60,7 @@ interface ISimulator extends INameGetter {
 }
 
 interface INameGetter {
-	getSimulatorName(deviceId: string): string;
+	getSimulatorName(deviceName?: string): string;
 }
 
 interface IApplication {
