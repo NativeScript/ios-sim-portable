@@ -39,12 +39,12 @@ interface IDictionary<T> {
 	[key: string]: T;
 }
 
-interface IInteropSimulator {
+interface IInteropSimulator extends INameGetter {
 	getDevices(): IFuture<IDevice[]>;
 	setSimulatedDevice(config: any): void;
 }
 
-interface ISimulator {
+interface ISimulator extends INameGetter {
 	getDevices(): IFuture<IDevice[]>;
 	getSdks(): IFuture<ISdk[]>;
 	run(applicationPath: string, applicationIdentifier: string): IFuture<void>;
@@ -57,6 +57,10 @@ interface ISimulator {
 	stopApplication(deviceId: string, appIdentifier: string): IFuture<string>;
 	printDeviceLog(deviceId: string, launchResult?: string): void;
 	startSimulator(): IFuture<void>;
+}
+
+interface INameGetter {
+	getSimulatorName(deviceId: string): string;
 }
 
 interface IApplication {
