@@ -7,9 +7,9 @@ export abstract class IPhoneSimulatorNameGetter implements INameGetter {
 
 	public defaultDeviceIdentifier: string;
 
-	public getSimulatorName(): string {
+	public getSimulatorName(deviceName?: string): string {
 		if (!this._simulatorName) {
-			this._simulatorName = options.device || this.defaultDeviceIdentifier;
+			this._simulatorName = options.device || deviceName || this.defaultDeviceIdentifier;
 		}
 
 		return this._simulatorName;
