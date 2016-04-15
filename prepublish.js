@@ -1,11 +1,7 @@
 var fs = require("fs");
+var grunt = require("grunt");
 
-var callback = function() { };
+var callback = function(err) {};
 
-if (!fs.existsSync("lib/ios-sim.js")) {
-	var grunt = require("grunt");
-	grunt.cli.tasks = ["ts:devlib"];
-	grunt.cli(null, callback);
-} else {
-	process.nextTick(callback);
-}
+grunt.cli.tasks = ["ts:devlib"];
+grunt.cli(null, callback);
