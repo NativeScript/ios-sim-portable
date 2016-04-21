@@ -9,6 +9,8 @@ import * as os from "os";
 import xcode = require("./xcode");
 let bplistParser = require("bplist-parser");
 let osenv = require("osenv");
+let isDeviceLogOperationStarted = false;
+let pid: string;
 
 export function getInstalledApplications(deviceId: string): IFuture<IApplication[]> {
 	return (() => {
@@ -38,37 +40,41 @@ export function getInstalledApplications(deviceId: string): IFuture<IApplication
 }
 
 export function printDeviceLog(deviceId: string, launchResult?: string): void {
-	let logFilePath = path.join(osenv.home(), "Library", "Logs", "CoreSimulator", deviceId, "system.log");
-	let pid: string;
 	if(launchResult) {
 		pid = launchResult.split(":")[1].trim();
 	}
-	let childProcess = require("child_process").spawn("tail", ['-f', '-n', '1', logFilePath]);
-	if (childProcess.stdout) {
-		childProcess.stdout.on("data", (data: NodeBuffer) => {
-			let dataAsString = data.toString();
-			if(pid) {
-				if (dataAsString.indexOf(`[${pid}]`) > -1) {
-					process.stdout.write(dataAsString);
-				}
-			} else {
-				process.stdout.write(dataAsString);
-			}
-		});
-	}
 
-	if (childProcess.stderr) {
-		childProcess.stderr.on("data", (data: string) => {
-			let dataAsString = data.toString();
-			if(pid) {
-				if (dataAsString.indexOf(`[${pid}]`) > -1) {
+	if(!isDeviceLogOperationStarted) {
+		let logFilePath = path.join(osenv.home(), "Library", "Logs", "CoreSimulator", deviceId, "system.log");
+		let childProcess = require("child_process").spawn("tail", ['-f', '-n', '1', logFilePath]);
+		if (childProcess.stdout) {
+			childProcess.stdout.on("data", (data: NodeBuffer) => {
+				let dataAsString = data.toString();
+				if(pid) {
+					if (dataAsString.indexOf(`[${pid}]`) > -1) {
+						process.stdout.write(dataAsString);
+					}
+				} else {
 					process.stdout.write(dataAsString);
 				}
-			} else {
-				process.stdout.write(dataAsString);
-			}
-			process.stdout.write(data.toString());
-		});
+			});
+		}
+
+		if (childProcess.stderr) {
+			childProcess.stderr.on("data", (data: string) => {
+				let dataAsString = data.toString();
+				if(pid) {
+					if (dataAsString.indexOf(`[${pid}]`) > -1) {
+						process.stdout.write(dataAsString);
+					}
+				} else {
+					process.stdout.write(dataAsString);
+				}
+				process.stdout.write(data.toString());
+			});
+		}
+
+		isDeviceLogOperationStarted = true;
 	}
 }
 
