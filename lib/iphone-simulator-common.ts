@@ -8,6 +8,7 @@ import * as path from "path";
 import * as os from "os";
 import xcode = require("./xcode");
 let bplistParser = require("bplist-parser");
+let plist = require("plist");
 let osenv = require("osenv");
 let isDeviceLogOperationStarted = false;
 let pid: string;
@@ -26,10 +27,9 @@ export function getInstalledApplications(deviceId: string): IFuture<IApplication
 				let applicationDirContents = fs.readdirSync(fullApplicationPath);
 				let applicationName = _.find(applicationDirContents, fileName => path.extname(fileName) === ".app");
 				let plistFilePath = path.join(fullApplicationPath, applicationName, "Info.plist");
-				let applicationData = parseFile(plistFilePath).wait();
 				result.push({
 					guid: applicationGuid,
-					appIdentifier: applicationData[0].CFBundleIdentifier,
+					appIdentifier: getBundleIdentifier(plistFilePath).wait(),
 					path: path.join(fullApplicationPath, applicationName)
 				});
 			}
@@ -96,4 +96,18 @@ function parseFile(plistFilePath: string): IFuture<any> {
 		}
 	});
 	return future;
+}
+
+function getBundleIdentifier(plistFilePath: string): IFuture<string> {
+	return (() => {
+		let plistData: any;
+		try {
+			plistData = parseFile(plistFilePath).wait()[0];
+		} catch (err) {
+			let content = fs.readFileSync(plistFilePath).toString();
+			plistData = plist.parse(content);
+		}
+
+		return plistData && plistData.CFBundleIdentifier;
+	}).future<string>()();
 }
