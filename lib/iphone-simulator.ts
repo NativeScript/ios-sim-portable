@@ -37,10 +37,11 @@ export class iPhoneSimulator implements IiPhoneSimulator {
 			}
 		}
 
-		if(options.sdkVersion) {
+		let sdkVersion = options.sdkVersion || options.sdk;
+		if(sdkVersion) {
 			let runtimeVersions = _.unique(_.map(this.simulator.getDevices().wait(), (device: IDevice) => device.runtimeVersion));
-			if(!_.contains(runtimeVersions, options.sdkVersion)) {
-				errors.fail(`Unable to find sdk ${options.sdkVersion}. The valid runtime versions are ${runtimeVersions.join(", ")}`);
+			if(!_.contains(runtimeVersions, sdkVersion)) {
+				errors.fail(`Unable to find sdk ${sdkVersion}. The valid runtime versions are ${runtimeVersions.join(", ")}`);
 			}
 		}
 
