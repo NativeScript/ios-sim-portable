@@ -104,21 +104,23 @@ export class XCode7Simulator extends IPhoneSimulatorNameGetter implements ISimul
 
 	private getDeviceToRun(): IFuture<IDevice> {
 		return (() => {
-			let devices = this.simctl.getDevices().wait();
+			let devices = this.simctl.getDevices().wait(),
+				sdkVersion = options.sdkVersion || options.sdk;
+
 			let result = _.find(devices, (device: IDevice) => {
-				if(options.sdkVersion && !options.device) {
-					return device.runtimeVersion === options.sdkVersion;
+				if(sdkVersion && !options.device) {
+					return device.runtimeVersion === sdkVersion;
 				}
 
-				if(options.device && !options.sdkVersion) {
+				if(options.device && !sdkVersion) {
 					return device.name === options.device;
 				}
 
-				if(options.device && options.sdkVersion) {
-					return device.runtimeVersion === options.sdkVersion && device.name === options.device;
+				if(options.device && sdkVersion) {
+					return device.runtimeVersion === sdkVersion && device.name === options.device;
 				}
 
-				if(!options.sdkVersion && !options.device) {
+				if(!sdkVersion && !options.device) {
 					return this.isDeviceBooted(device);
 				}
 			});

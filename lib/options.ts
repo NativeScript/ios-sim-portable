@@ -20,7 +20,8 @@ var knownOptions: any = {
 	"help": { type: OptionType.Boolean },
 	"logging": { type: OptionType.Boolean },
 	"waitForDebugger": { type: OptionType.Boolean },
-	"sdkVersion": { type: OptionType.String }
+	"sdkVersion": { type: OptionType.String }, // Obsolete, use sdk instead.
+	"sdk": { type: OptionType.String }
 };
 
 var parsed: any = {};

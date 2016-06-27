@@ -84,7 +84,8 @@ export class IPhoneInteropSimulatorBase extends IPhoneSimulatorNameGetter {
 		config("setApplicationToSimulateOnStart",  appSpec);
 		config("setSimulatedApplicationShouldWaitForDebugger", options.waitForDebugger);
 
-		let sdkRoot = options.sdkVersion ? $(this.getSdkRootPathByVersion(options.sdkVersion)) : this.getClassByName("DTiPhoneSimulatorSystemRoot")("defaultRoot");
+		let sdkVersion = options.sdkVersion || options.sdk;
+		let sdkRoot = sdkVersion ? $(this.getSdkRootPathByVersion(sdkVersion)) : this.getClassByName("DTiPhoneSimulatorSystemRoot")("defaultRoot");
 		config("setSimulatedSystemRoot", sdkRoot);
 
 		this.validateDevice();
