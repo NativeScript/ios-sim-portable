@@ -10,6 +10,8 @@ import * as fs from "fs";
 import * as path from "path";
 import * as util from "util";
 import * as os from "os";
+import * as _ from "lodash";
+
 import common = require("./iphone-simulator-common");
 import { Simctl } from "./simctl";
 let $ = require("nodobjc");

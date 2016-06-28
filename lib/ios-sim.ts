@@ -1,6 +1,7 @@
 ///<reference path="./.d.ts"/>
 "use strict";
-global._ = require("lodash");
+
+import * as _ from "lodash";
 
 import Fiber = require("fibers");
 import Future = require("fibers/future");

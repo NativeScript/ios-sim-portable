@@ -7,6 +7,8 @@ import * as fs from "fs";
 import * as path from "path";
 import * as os from "os";
 import xcode = require("./xcode");
+import * as _ from "lodash";
+
 let bplistParser = require("bplist-parser");
 let plist = require("plist");
 let osenv = require("osenv");
