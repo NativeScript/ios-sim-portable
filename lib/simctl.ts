@@ -5,6 +5,7 @@ import childProcess = require("./child-process");
 import future = require("fibers/future");
 import errors = require("./errors");
 import options = require("./options");
+import * as _ from "lodash";
 
 export class Simctl implements ISimctl {
 

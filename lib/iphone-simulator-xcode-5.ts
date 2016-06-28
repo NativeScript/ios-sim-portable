@@ -6,6 +6,7 @@ import Future = require("fibers/future");
 import options = require("./options");
 import utils = require("./utils");
 import util = require("util");
+import * as _ from "lodash";
 
 var $ = require("nodobjc");
 

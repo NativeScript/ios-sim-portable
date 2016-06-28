@@ -2,6 +2,7 @@
 "use strict";
 
 var yargs = require("yargs");
+import * as _ from "lodash";
 
 class OptionType {
 	public static String = "string";

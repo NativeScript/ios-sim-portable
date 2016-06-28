@@ -11,6 +11,7 @@ import { Simctl } from "./simctl";
 import util = require("util");
 import utils = require("./utils");
 import xcode = require("./xcode");
+import * as _ from "lodash";
 
 import {IPhoneSimulatorNameGetter} from "./iphone-simulator-name-getter";
 

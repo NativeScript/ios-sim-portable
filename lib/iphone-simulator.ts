@@ -16,6 +16,8 @@ import xcode7SimulatorLib = require("./iphone-simulator-xcode-7");
 import xcode6SimulatorLib = require("./iphone-simulator-xcode-6");
 import xcode5SimulatorLib = require("./iphone-simulator-xcode-5");
 
+import * as _ from "lodash";
+
 var $ = require("nodobjc");
 
 export class iPhoneSimulator implements IiPhoneSimulator {

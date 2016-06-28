@@ -10,6 +10,8 @@ import * as os from "os";
 import * as path from "path";
 import * as util from "util";
 import * as utils from "./utils";
+import * as _ from "lodash";
+
 let $ = require("nodobjc");
 import {IPhoneSimulatorNameGetter} from "./iphone-simulator-name-getter";
 
