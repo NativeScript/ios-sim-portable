@@ -1,7 +1,11 @@
-var fs = require("fs");
-var grunt = require("grunt");
+var fs = require("fs"),
+	path = require("path");
 
-var callback = function(err) {};
+var pathToTypeScriptEntryPoint = path.join(__dirname, "lib", "ios-sim.ts");
+if (fs.existsSync(pathToTypeScriptEntryPoint)) {
+	var callback = function(err) {},
+		grunt = require("grunt");
 
-grunt.cli.tasks = ["ts:devlib"];
-grunt.cli(null, callback);
+	grunt.cli.tasks = ["ts:devlib"];
+	grunt.cli(null, callback);
+}
