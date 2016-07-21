@@ -51,8 +51,9 @@ export class XCode7Simulator extends IPhoneSimulatorNameGetter implements ISimul
 			}
 
 			this.startSimulator(device).wait();
-
-			this.simctl.install(device.id, applicationPath).wait();
+			if (!options.skipInstall) {
+				this.simctl.install(device.id, applicationPath).wait();
+			}
 			let launchResult = this.simctl.launch(device.id, applicationIdentifier).wait();
 
 			if (options.logging) {
