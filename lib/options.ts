@@ -22,7 +22,8 @@ var knownOptions: any = {
 	"logging": { type: OptionType.Boolean },
 	"waitForDebugger": { type: OptionType.Boolean },
 	"sdkVersion": { type: OptionType.String }, // Obsolete, use sdk instead.
-	"sdk": { type: OptionType.String }
+	"sdk": { type: OptionType.String },
+	"skipInstall": { type: OptionType.Boolean }
 };
 
 var parsed: any = {};
