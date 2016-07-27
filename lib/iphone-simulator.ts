@@ -12,6 +12,7 @@ import errors = require("./errors");
 import options = require("./options");
 import xcode = require("./xcode");
 
+import xcode8SimulatorLib = require("./iphone-simulator-xcode-8");
 import xcode7SimulatorLib = require("./iphone-simulator-xcode-7");
 import xcode6SimulatorLib = require("./iphone-simulator-xcode-6");
 import xcode5SimulatorLib = require("./iphone-simulator-xcode-5");
@@ -85,7 +86,9 @@ export class iPhoneSimulator implements IiPhoneSimulator {
 
 			let simulator: ISimulator = null;
 
-			if(majorVersion === "7") {
+			if(majorVersion === "8") {
+				simulator = new xcode8SimulatorLib.XCode8Simulator();
+			} else if(majorVersion === "7") {
 				simulator = new xcode7SimulatorLib.XCode7Simulator();
 			} else if (majorVersion === "6") {
 				simulator = new xcode6SimulatorLib.XCode6Simulator();
