@@ -51,14 +51,25 @@ export function printDeviceLog(deviceId: string, launchResult?: string): void {
 		let childProcess = require("child_process").spawn("tail", ['-f', '-n', '1', logFilePath]);
 		if (childProcess.stdout) {
 			childProcess.stdout.on("data", (data: NodeBuffer) => {
-				let dataAsString = data.toString();
-				if(pid) {
-					if (dataAsString.indexOf(`[${pid}]`) > -1) {
-						process.stdout.write(dataAsString);
-					}
-				} else {
-					process.stdout.write(dataAsString);
+				let deviceLog = data.toString();
+				if ((pid && deviceLog.indexOf("[" + pid + "]") < 0) ||
+					(deviceLog.indexOf("SecTaskCopyDebugDescription") !== -1) ||
+					(deviceLog.indexOf("assertion failed:") != -1 && deviceLog.indexOf("libxpc.dylib") !== -1)) {
+					return;
 				}
+				// CONSOLE LOG messages comme in the following form:
+				// <date> <domain> <app>[pid] CONSOLE LOG file:///location:row:column: <actual message goes here>
+				// This code removes the first part and leaves only the message as specified by the call to console.log function.
+				// This removes the unnecessary information and makes the log consistent with Android.
+				let logIndex = deviceLog.indexOf("CONSOLE LOG");
+				if (logIndex !== -1) {
+					let i = 4; 
+					while(i) { logIndex = deviceLog.indexOf(':', logIndex+1); i --; }
+					if (logIndex > 0) {
+						deviceLog = "JS:" + deviceLog.substring(logIndex+1, deviceLog.length);
+					}
+				}
+				process.stdout.write(deviceLog);
 			});
 		}
 
