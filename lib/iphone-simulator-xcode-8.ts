@@ -46,7 +46,7 @@ export class XCode8Simulator extends IPhoneSimulatorNameGetter implements ISimul
 		return (() => {
 			let device = this.getDeviceToRun().wait();
 			let currentBootedDevice = _.find(this.getDevices().wait(), device => this.isDeviceBooted(device));
-			if(currentBootedDevice && (currentBootedDevice.name.toLowerCase() !== device.name.toLowerCase() || currentBootedDevice.runtimeVersion !== device.runtimeVersion)) {
+			if (currentBootedDevice && (currentBootedDevice.name.toLowerCase() !== device.name.toLowerCase() || currentBootedDevice.runtimeVersion !== device.runtimeVersion)) {
 				this.killSimulator().wait();
 			}
 
@@ -86,7 +86,7 @@ export class XCode8Simulator extends IPhoneSimulatorNameGetter implements ISimul
 	}
 
 	public uninstallApplication(deviceId: string, appIdentifier: string): IFuture<void> {
-		return this.simctl.uninstall(deviceId, appIdentifier, {skipError: true});
+		return this.simctl.uninstall(deviceId, appIdentifier, { skipError: true });
 	}
 
 	public startApplication(deviceId: string, appIdentifier: string): IFuture<string> {
@@ -95,13 +95,13 @@ export class XCode8Simulator extends IPhoneSimulatorNameGetter implements ISimul
 
 	public stopApplication(deviceId: string, cfBundleExecutable: string): IFuture<string> {
 		try {
-			return childProcess.exec(`killall ${cfBundleExecutable}`, {skipError: true});
-		} catch(e) {
+			return childProcess.exec(`killall ${cfBundleExecutable}`, { skipError: true });
+		} catch (e) {
 		}
 	}
 
-	public printDeviceLog(deviceId: string, launchResult?: string): void {
-		common.printDeviceLog(deviceId, launchResult);
+	public printDeviceLog(deviceId: string, launchResult?: string): any {
+		return common.printDeviceLog(deviceId, launchResult);
 	}
 
 	private getDeviceToRun(): IFuture<IDevice> {
@@ -110,28 +110,28 @@ export class XCode8Simulator extends IPhoneSimulatorNameGetter implements ISimul
 				sdkVersion = options.sdkVersion || options.sdk;
 
 			let result = _.find(devices, (device: IDevice) => {
-				if(sdkVersion && !options.device) {
+				if (sdkVersion && !options.device) {
 					return device.runtimeVersion === sdkVersion;
 				}
 
-				if(options.device && !sdkVersion) {
+				if (options.device && !sdkVersion) {
 					return device.name === options.device;
 				}
 
-				if(options.device && sdkVersion) {
+				if (options.device && sdkVersion) {
 					return device.runtimeVersion === sdkVersion && device.name === options.device;
 				}
 
-				if(!sdkVersion && !options.device) {
+				if (!sdkVersion && !options.device) {
 					return this.isDeviceBooted(device);
 				}
 			});
 
-			if(!result) {
+			if (!result) {
 				result = _.find(devices, (device: IDevice) => device.name === this.defaultDeviceIdentifier);
 			}
 
-			if(!result) {
+			if (!result) {
 				let sortedDevices = _.sortBy(devices, (device) => device.runtimeVersion);
 				result = _.last(sortedDevices);
 			}
