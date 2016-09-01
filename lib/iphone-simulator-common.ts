@@ -51,14 +51,21 @@ export function printDeviceLog(deviceId: string, launchResult?: string): void {
 		let childProcess = require("child_process").spawn("tail", ['-f', '-n', '1', logFilePath]);
 		if (childProcess.stdout) {
 			childProcess.stdout.on("data", (data: NodeBuffer) => {
-				let dataAsString = data.toString();
-				if(pid) {
-					if (dataAsString.indexOf(`[${pid}]`) > -1) {
-						process.stdout.write(dataAsString);
-					}
-				} else {
-					process.stdout.write(dataAsString);
+				let deviceLog = data.toString();
+				if ((pid && deviceLog.indexOf("[" + pid + "]") < 0) ||
+					(deviceLog.indexOf("SecTaskCopyDebugDescription") != -1) ||
+					(deviceLog.indexOf("assertion failed:") != -1 && deviceLog.indexOf("libxpc.dylib") != -1)) {
+					return;
 				}
+				let logIndex = deviceLog.indexOf("CONSOLE LOG");
+				if (logIndex != -1) {
+					let i = 4; 
+					while(i) { logIndex = deviceLog.indexOf(':', logIndex+1); i --; }
+					if (logIndex > 0) {
+						deviceLog = "JS:" + deviceLog.substring(logIndex+1, deviceLog.length);
+					}
+				}
+				process.stdout.write(deviceLog);
 			});
 		}
 
