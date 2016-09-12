@@ -52,7 +52,7 @@ export class XCode5Simulator extends iPhoneSimulatorBaseLib.IPhoneInteropSimulat
 		}).future<ISdk[]>()();
 	}
 
-	public setSimulatedDevice(config:any): void {
+	public setSimulatedDevice(config: any): void {
 		config("setSimulatedDeviceInfoName", $(this.deviceIdentifier));
 	}
 
@@ -84,7 +84,7 @@ export class XCode5Simulator extends iPhoneSimulatorBaseLib.IPhoneInteropSimulat
 		return Future.fromResult("");
 	}
 
-	public printDeviceLog(deviceId: string): void {	}
+	public printDeviceLog(deviceId: string): any { }
 
 	public startSimulator(): IFuture<void> {
 		return Future.fromResult();

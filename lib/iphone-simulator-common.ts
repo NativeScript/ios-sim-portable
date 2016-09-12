@@ -2,11 +2,11 @@
 "use strict";
 
 import childProcess = require("./child-process");
+import xcode = require("./xcode");
 import Future = require("fibers/future");
 import * as fs from "fs";
 import * as path from "path";
 import * as os from "os";
-import xcode = require("./xcode");
 import * as _ from "lodash";
 
 let bplistParser = require("bplist-parser");
@@ -14,11 +14,12 @@ let plist = require("plist");
 let osenv = require("osenv");
 let isDeviceLogOperationStarted = false;
 let pid: string;
+let deviceLogChildProcess: any;
 
 export function getInstalledApplications(deviceId: string): IFuture<IApplication[]> {
 	return (() => {
 		let rootApplicationsPath = path.join(osenv.home(), `/Library/Developer/CoreSimulator/Devices/${deviceId}/data/Containers/Bundle/Application`);
-		if(!fs.existsSync(rootApplicationsPath)) {
+		if (!fs.existsSync(rootApplicationsPath)) {
 			rootApplicationsPath = path.join(osenv.home(), `/Library/Developer/CoreSimulator/Devices/${deviceId}/data/Applications`);
 		}
 		let applicationGuids = fs.readdirSync(rootApplicationsPath);
@@ -41,18 +42,18 @@ export function getInstalledApplications(deviceId: string): IFuture<IApplication
 	}).future<IApplication[]>()();
 }
 
-export function printDeviceLog(deviceId: string, launchResult?: string): void {
-	if(launchResult) {
+export function printDeviceLog(deviceId: string, launchResult?: string): any {
+	if (launchResult) {
 		pid = launchResult.split(":")[1].trim();
 	}
 
-	if(!isDeviceLogOperationStarted) {
+	if (!isDeviceLogOperationStarted) {
 		let logFilePath = path.join(osenv.home(), "Library", "Logs", "CoreSimulator", deviceId, "system.log");
-		let childProcess = require("child_process").spawn("tail", ['-f', '-n', '1', logFilePath]);
-		if (childProcess.stdout) {
-			childProcess.stdout.on("data", (data: NodeBuffer) => {
+		deviceLogChildProcess = require("child_process").spawn("tail", ['-f', '-n', '1', logFilePath]);
+		if (deviceLogChildProcess.stdout) {
+			deviceLogChildProcess.stdout.on("data", (data: NodeBuffer) => {
 				let dataAsString = data.toString();
-				if(pid) {
+				if (pid) {
 					if (dataAsString.indexOf(`[${pid}]`) > -1) {
 						process.stdout.write(dataAsString);
 					}
@@ -62,10 +63,10 @@ export function printDeviceLog(deviceId: string, launchResult?: string): void {
 			});
 		}
 
-		if (childProcess.stderr) {
-			childProcess.stderr.on("data", (data: string) => {
+		if (deviceLogChildProcess.stderr) {
+			deviceLogChildProcess.stderr.on("data", (data: string) => {
 				let dataAsString = data.toString();
-				if(pid) {
+				if (pid) {
 					if (dataAsString.indexOf(`[${pid}]`) > -1) {
 						process.stdout.write(dataAsString);
 					}
@@ -78,6 +79,8 @@ export function printDeviceLog(deviceId: string, launchResult?: string): void {
 
 		isDeviceLogOperationStarted = true;
 	}
+
+	return deviceLogChildProcess;
 }
 
 export function startSimulator(deviceId: string): IFuture<void> {
@@ -91,7 +94,7 @@ export function startSimulator(deviceId: string): IFuture<void> {
 function parseFile(plistFilePath: string): IFuture<any> {
 	let future = new Future<any>();
 	bplistParser.parseFile(plistFilePath, (err: Error, obj: any) => {
-		if(err) {
+		if (err) {
 			future.throw(err);
 		} else {
 			future.return(obj);
