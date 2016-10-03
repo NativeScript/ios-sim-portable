@@ -86,6 +86,8 @@ export class XCode5Simulator extends iPhoneSimulatorBaseLib.IPhoneInteropSimulat
 
 	public printDeviceLog(deviceId: string): any { }
 
+	public getDeviceLogProcess(deviceId: string): any { }
+
 	public startSimulator(): IFuture<void> {
 		return Future.fromResult();
 	}

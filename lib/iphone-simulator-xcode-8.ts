@@ -104,6 +104,10 @@ export class XCode8Simulator extends IPhoneSimulatorNameGetter implements ISimul
 		return common.printDeviceLog(deviceId, launchResult);
 	}
 
+	public getDeviceLogProcess(deviceId: string): any {
+		return common.getDeviceLogProcess(deviceId);
+	}
+
 	private getDeviceToRun(): IFuture<IDevice> {
 		return (() => {
 			let devices = this.simctl.getDevices().wait(),

@@ -88,6 +88,10 @@ export class XCode6Simulator extends iPhoneSimulatorBaseLib.IPhoneInteropSimulat
 		return common.printDeviceLog(deviceId, launchResult);
 	}
 
+	public getDeviceLogProcess(deviceId: string): any {
+		return common.getDeviceLogProcess(deviceId);
+	}
+
 	public startSimulator(): IFuture<void> {
 		let device = this.devices[0];
 		return common.startSimulator(device.id);
