@@ -56,6 +56,7 @@ interface ISimulator extends INameGetter {
 	startApplication(deviceId: string, appIdentifier: string): IFuture<string>;
 	stopApplication(deviceId: string, appIdentifier: string): IFuture<string>;
 	printDeviceLog(deviceId: string, launchResult?: string): any;
+	getDeviceLogProcess(deviceId: string): any;
 	startSimulator(): IFuture<void>;
 }
 

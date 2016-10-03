@@ -48,8 +48,7 @@ export function printDeviceLog(deviceId: string, launchResult?: string): any {
 	}
 
 	if (!isDeviceLogOperationStarted) {
-		let logFilePath = path.join(osenv.home(), "Library", "Logs", "CoreSimulator", deviceId, "system.log");
-		deviceLogChildProcess = require("child_process").spawn("tail", ['-f', '-n', '1', logFilePath]);
+		deviceLogChildProcess = this.getDeviceLogProcess(deviceId);
 		if (deviceLogChildProcess.stdout) {
 			deviceLogChildProcess.stdout.on("data", (data: NodeBuffer) => {
 				let dataAsString = data.toString();
@@ -76,7 +75,15 @@ export function printDeviceLog(deviceId: string, launchResult?: string): any {
 				process.stdout.write(data.toString());
 			});
 		}
+	}
 
+	return deviceLogChildProcess;
+}
+
+export function getDeviceLogProcess(deviceId: string): any {
+	if (!isDeviceLogOperationStarted) {
+		let logFilePath = path.join(osenv.home(), "Library", "Logs", "CoreSimulator", deviceId, "system.log");
+		deviceLogChildProcess = require("child_process").spawn("tail", ['-f', '-n', '1', logFilePath]);
 		isDeviceLogOperationStarted = true;
 	}
 

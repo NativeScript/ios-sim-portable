@@ -72,6 +72,7 @@ Object.defineProperty(global.publicApi, "getInstalledApplications", {
  "startApplication",
  "stopApplication",
  "printDeviceLog",
+ "getDeviceLogProcess",
  "startSimulator",
  "getSimulatorName"].forEach(methodName => {
 	Object.defineProperty(global.publicApi, methodName, {
