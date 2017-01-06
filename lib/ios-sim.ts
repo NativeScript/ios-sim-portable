@@ -10,7 +10,7 @@ const publicApi = {};
 
 Object.defineProperty(publicApi, "getRunningSimulator", {
 	get: () => {
-		return async (...args: any[]) => {
+		return (...args: any[]) => {
 			let isResolved = false;
 
 			return new Promise<any>((resolve, reject) => {
@@ -32,9 +32,9 @@ Object.defineProperty(publicApi, "getRunningSimulator", {
 
 Object.defineProperty(publicApi, "getApplicationPath", {
 	get: () => {
-		return async (...args: any[]) => {
+		return (...args: any[]) => {
 			let simulator = getSimulator();
-			let result = await simulator.getApplicationPath.apply(simulator, args);
+			let result = simulator.getApplicationPath.apply(simulator, args);
 			return result;
 		}
 	}
@@ -42,9 +42,9 @@ Object.defineProperty(publicApi, "getApplicationPath", {
 
 Object.defineProperty(publicApi, "getInstalledApplications", {
 	get: () => {
-		return async (...args: any[]) => {
+		return (...args: any[]) => {
 			let simulator = getSimulator();
-			let installedApplications: IApplication[] = await simulator.getInstalledApplications.apply(simulator, args);
+			let installedApplications: IApplication[] = simulator.getInstalledApplications.apply(simulator, args);
 			let result = _.map(installedApplications, application => application.appIdentifier);
 			return result;
 		}
