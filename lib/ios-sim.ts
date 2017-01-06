@@ -1,10 +1,5 @@
 import * as _ from "lodash";
 
-import commandExecutorLibPath = require("./command-executor");
-
-var commandExecutor: ICommandExecutor = new commandExecutorLibPath.CommandExecutor();
-commandExecutor.execute();
-
 function getSimulator(): ISimulator {
 	let libraryPath = require("./iphone-simulator");
 	let obj = new libraryPath.iPhoneSimulator();

@@ -1,12 +1,10 @@
 {
   "name": "ios-sim-portable",
-  "version": "1.6.1",
+  "version": "2.0.0",
   "description": "",
   "main": "./lib/ios-sim.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "prepublish": "node prepublish.js",
-    "postinstall": "node postinstall.js"
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "bin": {
     "ios-sim-portable": "./bin/ios-sim-portable.js",
