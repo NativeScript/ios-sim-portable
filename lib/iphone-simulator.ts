@@ -12,10 +12,8 @@ import errors = require("./errors");
 import options = require("./options");
 import xcode = require("./xcode");
 
-import xcode8SimulatorLib = require("./iphone-simulator-xcode-8");
-import xcode7SimulatorLib = require("./iphone-simulator-xcode-7");
-import xcode6SimulatorLib = require("./iphone-simulator-xcode-6");
-import xcode5SimulatorLib = require("./iphone-simulator-xcode-5");
+import { XCodeSimctlSimulator } from "./iphone-simulator-xcode-simctl";
+import { XCode6Simulator } from "./iphone-simulator-xcode-6";
 
 import * as _ from "lodash";
 
@@ -29,21 +27,21 @@ export class iPhoneSimulator implements IiPhoneSimulator {
 	}
 
 	public run(applicationPath: string, applicationIdentifier: string): IFuture<void> {
-		if(!fs.existsSync(applicationPath)) {
+		if (!fs.existsSync(applicationPath)) {
 			errors.fail("Path does not exist ", applicationPath);
 		}
 
-		if(options.device) {
+		if (options.device) {
 			let deviceNames = _.unique(_.map(this.simulator.getDevices().wait(), (device: IDevice) => device.name));
-			if(!_.contains(deviceNames, options.device)) {
+			if (!_.contains(deviceNames, options.device)) {
 				errors.fail(`Unable to find device ${options.device}. The valid device names are ${deviceNames.join(", ")}`);
 			}
 		}
 
 		let sdkVersion = options.sdkVersion || options.sdk;
-		if(sdkVersion) {
+		if (sdkVersion) {
 			let runtimeVersions = _.unique(_.map(this.simulator.getDevices().wait(), (device: IDevice) => device.runtimeVersion));
-			if(!_.contains(runtimeVersions, sdkVersion)) {
+			if (!_.contains(runtimeVersions, sdkVersion)) {
 				errors.fail(`Unable to find sdk ${sdkVersion}. The valid runtime versions are ${runtimeVersions.join(", ")}`);
 			}
 		}
@@ -63,8 +61,8 @@ export class iPhoneSimulator implements IiPhoneSimulator {
 			let sdks = this.simulator.getSdks().wait();
 			_.each(sdks, (sdk) => {
 				let output = `    Display Name: ${sdk.displayName} ${os.EOL}    Version: ${sdk.version} ${os.EOL}`;
-				if(sdk.rootPath) {
-					 output += `    Root path: ${sdk.rootPath} ${os.EOL}`;
+				if (sdk.rootPath) {
+					output += `    Root path: ${sdk.rootPath} ${os.EOL}`;
 				}
 				console.log(output);
 			});
@@ -72,7 +70,7 @@ export class iPhoneSimulator implements IiPhoneSimulator {
 	}
 
 	public sendNotification(notification: string): IFuture<void> {
-		if(!notification) {
+		if (!notification) {
 			errors.fail("Notification required.");
 		}
 
@@ -86,16 +84,10 @@ export class iPhoneSimulator implements IiPhoneSimulator {
 
 			let simulator: ISimulator = null;
 
-			if(majorVersion === "8") {
-				simulator = new xcode8SimulatorLib.XCode8Simulator();
-			} else if(majorVersion === "7") {
-				simulator = new xcode7SimulatorLib.XCode7Simulator();
-			} else if (majorVersion === "6") {
-				simulator = new xcode6SimulatorLib.XCode6Simulator();
-			} else if(majorVersion === "5") {
-				simulator = new xcode5SimulatorLib.XCode5Simulator();
+			if (majorVersion === "6") {
+				simulator = new XCode6Simulator();
 			} else {
-				errors.fail(`Unsupported xcode version ${xcodeVersionData.major}.`);
+				simulator = new XCodeSimctlSimulator();
 			}
 
 			return simulator;

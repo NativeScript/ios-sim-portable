@@ -15,7 +15,7 @@ import * as _ from "lodash";
 
 import {IPhoneSimulatorNameGetter} from "./iphone-simulator-name-getter";
 
-export class XCode7Simulator extends IPhoneSimulatorNameGetter implements ISimulator {
+export class XCodeSimctlSimulator extends IPhoneSimulatorNameGetter implements ISimulator {
 	private static DEVICE_IDENTIFIER_PREFIX = "com.apple.CoreSimulator.SimDeviceType";
 	public defaultDeviceIdentifier = "iPhone 6";
 

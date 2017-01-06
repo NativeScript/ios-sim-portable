@@ -29,7 +29,7 @@ export class XCode6Simulator extends iPhoneSimulatorBaseLib.IPhoneInteropSimulat
 	private simctl: ISimctl;
 
 	constructor() {
-		super(this);
+		super();
 
 		this.defaultDeviceIdentifier = "iPhone-4s";
 		this.cachedDevices = null;

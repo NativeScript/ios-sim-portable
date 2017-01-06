@@ -15,8 +15,8 @@ import * as _ from "lodash";
 let $ = require("nodobjc");
 import {IPhoneSimulatorNameGetter} from "./iphone-simulator-name-getter";
 
-export class IPhoneInteropSimulatorBase extends IPhoneSimulatorNameGetter {
-	constructor(private simulator: IInteropSimulator) {
+export abstract class IPhoneInteropSimulatorBase extends IPhoneSimulatorNameGetter {
+	constructor() {
 		super();
 	}
 
@@ -30,6 +30,9 @@ export class IPhoneInteropSimulatorBase extends IPhoneSimulatorNameGetter {
 	private static SIMULATOR_FRAMEWORK_RELATIVE_PATH = "../SharedFrameworks/DVTiPhoneSimulatorRemoteClient.framework";
 
 	private static DEFAULT_TIMEOUT_IN_SECONDS = 90;
+
+	public abstract getDevices(): IFuture<IDevice[]>;
+	public abstract setSimulatedDevice(config: any): void;
 
 	public run(appPath: string, applicationIdentifier: string): IFuture<void> {
 		return this.execute(this.launch, { canRunMainLoop: true, appPath: appPath, applicationIdentifier: applicationIdentifier });
@@ -70,7 +73,7 @@ export class IPhoneInteropSimulatorBase extends IPhoneSimulatorNameGetter {
 
 	private validateDevice() {
 		if (options.device) {
-			let devices = this.simulator.getDevices().wait();
+			let devices = this.getDevices().wait();
 			let validDeviceIdentifiers = _.map(devices, device => device.id);
 			if(!_.contains(validDeviceIdentifiers, options.device)) {
 				errors.fail("Invalid device identifier %s. Valid device identifiers are %s.", options.device, utils.stringify(validDeviceIdentifiers));
@@ -91,7 +94,7 @@ export class IPhoneInteropSimulatorBase extends IPhoneSimulatorNameGetter {
 		config("setSimulatedSystemRoot", sdkRoot);
 
 		this.validateDevice();
-		this.simulator.setSimulatedDevice(config);
+		this.setSimulatedDevice(config);
 
 		if (options.logging) {
 			let logPath = this.createLogPipe(appPath).wait();
