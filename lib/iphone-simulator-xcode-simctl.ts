@@ -13,7 +13,7 @@ import utils = require("./utils");
 import xcode = require("./xcode");
 import * as _ from "lodash";
 
-import {IPhoneSimulatorNameGetter} from "./iphone-simulator-name-getter";
+import { IPhoneSimulatorNameGetter } from "./iphone-simulator-name-getter";
 
 export class XCodeSimctlSimulator extends IPhoneSimulatorNameGetter implements ISimulator {
 	private static DEVICE_IDENTIFIER_PREFIX = "com.apple.CoreSimulator.SimDeviceType";
@@ -26,76 +26,70 @@ export class XCodeSimctlSimulator extends IPhoneSimulatorNameGetter implements I
 		this.simctl = new Simctl();
 	}
 
-	public getDevices(): IFuture<IDevice[]> {
+	public getDevices(): IDevice[] {
 		return this.simctl.getDevices();
 	}
 
-	public getSdks(): IFuture<ISdk[]> {
-		return (() => {
-			let devices = this.simctl.getDevices().wait();
-			return _.map(devices, device => {
-				return {
-					displayName: `iOS ${device.runtimeVersion}`,
-					version: device.runtimeVersion
-				};
-			});
-		}).future<ISdk[]>()();
+	public getSdks(): ISdk[] {
+		let devices = this.simctl.getDevices();
+		return _.map(devices, device => {
+			return {
+				displayName: `iOS ${device.runtimeVersion}`,
+				version: device.runtimeVersion
+			};
+		});
 	}
 
-	public run(applicationPath: string, applicationIdentifier: string): IFuture<void> {
-		return (() => {
-			let device = this.getDeviceToRun().wait();
-			let currentBootedDevice = _.find(this.getDevices().wait(), device => this.isDeviceBooted(device));
-			if (currentBootedDevice && (currentBootedDevice.name.toLowerCase() !== device.name.toLowerCase() || currentBootedDevice.runtimeVersion !== device.runtimeVersion)) {
-				this.killSimulator().wait();
-			}
+	public run(applicationPath: string, applicationIdentifier: string): void {
+		let device = this.getDeviceToRun();
+		let currentBootedDevice = _.find(this.getDevices(), device => this.isDeviceBooted(device));
+		if (currentBootedDevice && (currentBootedDevice.name.toLowerCase() !== device.name.toLowerCase() || currentBootedDevice.runtimeVersion !== device.runtimeVersion)) {
+			this.killSimulator();
+		}
 
-			this.startSimulator(device).wait();
-			if (!options.skipInstall) {
-				this.simctl.install(device.id, applicationPath).wait();
-			}
-			let launchResult = this.simctl.launch(device.id, applicationIdentifier).wait();
+		this.startSimulator(device);
+		if (!options.skipInstall) {
+			this.simctl.install(device.id, applicationPath);
+		}
+		let launchResult = this.simctl.launch(device.id, applicationIdentifier);
 
-			if (options.logging) {
-				this.printDeviceLog(device.id, launchResult);
-			}
-		}).future<void>()();
+		if (options.logging) {
+			this.printDeviceLog(device.id, launchResult);
+		}
 	}
 
-	public sendNotification(notification: string): IFuture<void> {
-		return (() => {
-			let device = this.getBootedDevice().wait();
-			if (!device) {
-				errors.fail("Could not find device.");
-			}
+	public sendNotification(notification: string): void {
+		let device = this.getBootedDevice();
+		if (!device) {
+			errors.fail("Could not find device.");
+		}
 
-			this.simctl.notifyPost("booted", notification).wait();
-		}).future<void>()();
+		this.simctl.notifyPost("booted", notification);
 	}
 
-	public getApplicationPath(deviceId: string, applicationIdentifier: string): IFuture<string> {
+	public getApplicationPath(deviceId: string, applicationIdentifier: string): string {
 		return this.simctl.getAppContainer(deviceId, applicationIdentifier);
 	}
 
-	public getInstalledApplications(deviceId: string): IFuture<IApplication[]> {
+	public getInstalledApplications(deviceId: string): IApplication[] {
 		return common.getInstalledApplications(deviceId);
 	}
 
-	public installApplication(deviceId: string, applicationPath: string): IFuture<void> {
+	public installApplication(deviceId: string, applicationPath: string): void {
 		return this.simctl.install(deviceId, applicationPath);
 	}
 
-	public uninstallApplication(deviceId: string, appIdentifier: string): IFuture<void> {
+	public uninstallApplication(deviceId: string, appIdentifier: string): void {
 		return this.simctl.uninstall(deviceId, appIdentifier, { skipError: true });
 	}
 
-	public startApplication(deviceId: string, appIdentifier: string): IFuture<string> {
+	public startApplication(deviceId: string, appIdentifier: string): string {
 		return this.simctl.launch(deviceId, appIdentifier);
 	}
 
-	public stopApplication(deviceId: string, cfBundleExecutable: string): IFuture<string> {
+	public stopApplication(deviceId: string, cfBundleExecutable: string): string {
 		try {
-			return childProcess.exec(`killall ${cfBundleExecutable}`, { skipError: true });
+			return childProcess.execSync(`killall ${cfBundleExecutable}`, { skipError: true });
 		} catch (e) {
 		}
 	}
@@ -108,67 +102,61 @@ export class XCodeSimctlSimulator extends IPhoneSimulatorNameGetter implements I
 		return common.getDeviceLogProcess(deviceId);
 	}
 
-	private getDeviceToRun(): IFuture<IDevice> {
-		return (() => {
-			let devices = this.simctl.getDevices().wait(),
-				sdkVersion = options.sdkVersion || options.sdk;
+	private getDeviceToRun(): IDevice {
+		let devices = this.simctl.getDevices(),
+			sdkVersion = options.sdkVersion || options.sdk;
 
-			let result = _.find(devices, (device: IDevice) => {
-				if (sdkVersion && !options.device) {
-					return device.runtimeVersion === sdkVersion;
-				}
-
-				if (options.device && !sdkVersion) {
-					return device.name === options.device;
-				}
-
-				if (options.device && sdkVersion) {
-					return device.runtimeVersion === sdkVersion && device.name === options.device;
-				}
-
-				if (!sdkVersion && !options.device) {
-					return this.isDeviceBooted(device);
-				}
-			});
-
-			if (!result) {
-				result = _.find(devices, (device: IDevice) => device.name === this.defaultDeviceIdentifier);
+		let result = _.find(devices, (device: IDevice) => {
+			if (sdkVersion && !options.device) {
+				return device.runtimeVersion === sdkVersion;
 			}
 
-			if (!result) {
-				let sortedDevices = _.sortBy(devices, (device) => device.runtimeVersion);
-				result = _.last(sortedDevices);
+			if (options.device && !sdkVersion) {
+				return device.name === options.device;
 			}
 
-			return result;
-		}).future<IDevice>()();
+			if (options.device && sdkVersion) {
+				return device.runtimeVersion === sdkVersion && device.name === options.device;
+			}
+
+			if (!sdkVersion && !options.device) {
+				return this.isDeviceBooted(device);
+			}
+		});
+
+		if (!result) {
+			result = _.find(devices, (device: IDevice) => device.name === this.defaultDeviceIdentifier);
+		}
+
+		if (!result) {
+			let sortedDevices = _.sortBy(devices, (device) => device.runtimeVersion);
+			result = _.last(sortedDevices);
+		}
+
+		return result;
 	}
 
 	private isDeviceBooted(device: IDevice): boolean {
 		return device.state === 'Booted';
 	}
 
-	private getBootedDevice(): IFuture<IDevice> {
-		return (() => {
-			let devices = this.simctl.getDevices().wait();
-			return _.find(devices, device => this.isDeviceBooted(device));
-		}).future<IDevice>()();
+	private getBootedDevice(): IDevice {
+		let devices = this.simctl.getDevices();
+		return _.find(devices, device => this.isDeviceBooted(device));
 	}
 
-	public startSimulator(device?: IDevice): IFuture<void> {
-		return (() => {
-			device = device || this.getDeviceToRun().wait();
-			if (!this.isDeviceBooted(device)) {
-				common.startSimulator(device.id).wait();
-				// startSimulaltor doesn't always finish immediately, and the subsequent
-				// install fails since the simulator is not running.
-				// Give it some time to start before we attempt installing.
-				utils.sleep(1000);
-			}
-		}).future<void>()();
+	public startSimulator(device?: IDevice): void {
+		device = device || this.getDeviceToRun();
+		if (!this.isDeviceBooted(device)) {
+			common.startSimulator(device.id);
+			// startSimulaltor doesn't always finish immediately, and the subsequent
+			// install fails since the simulator is not running.
+			// Give it some time to start before we attempt installing.
+			utils.sleep(1000);
+		}
 	}
 
-	private killSimulator(): IFuture<any> {
+	private killSimulator(): Promise<any> {
 		return childProcess.spawn("pkill", ["-9", "-f", "Simulator"]);
 	}
 }

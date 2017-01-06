@@ -2,19 +2,19 @@
 "use strict";
 
 interface IiPhoneSimulator {
-	run(applicationPath: string, applicationIdentifier: string): IFuture<void>;
-	printDeviceTypes(): IFuture<void>;
-	printSDKS(): IFuture<void>;
-	sendNotification(notification: string): IFuture<void>;
-	createSimulator(): IFuture<ISimulator>;
+	run(applicationPath: string, applicationIdentifier: string): void;
+	printDeviceTypes(): void;
+	printSDKS(): void;
+	sendNotification(notification: string): void;
+	createSimulator(): ISimulator;
 }
 
 interface ICommand {
-	execute(args: string[]): IFuture<void>;
+	execute(args: string[]): void;
 }
 
 interface ICommandExecutor {
-	execute(): IFuture<void>;
+	execute(): void;
 }
 
 interface IDevice {
@@ -27,37 +27,32 @@ interface IDevice {
 }
 
 interface ISimctl {
-	launch(deviceId: string, applicationIdentifier: string): IFuture<string>;
-	install(deviceId: string, applicationPath: string): IFuture<void>;
-	uninstall(deviceId: string, applicationIdentifier: string, opts?: any): IFuture<void>;
-	notifyPost(deviceId: string, notification: string): IFuture<void>;
-	getDevices(): IFuture<IDevice[]>;
-	getAppContainer(deviceId: string, applicationIdentifier: string): IFuture<string>;
+	launch(deviceId: string, applicationIdentifier: string): string;
+	install(deviceId: string, applicationPath: string): void;
+	uninstall(deviceId: string, applicationIdentifier: string, opts?: any): void;
+	notifyPost(deviceId: string, notification: string): void;
+	getDevices(): IDevice[];
+	getAppContainer(deviceId: string, applicationIdentifier: string): string;
 }
 
 interface IDictionary<T> {
 	[key: string]: T;
 }
 
-interface IInteropSimulator extends INameGetter {
-	getDevices(): IFuture<IDevice[]>;
-	setSimulatedDevice(config: any): void;
-}
-
 interface ISimulator extends INameGetter {
-	getDevices(): IFuture<IDevice[]>;
-	getSdks(): IFuture<ISdk[]>;
-	run(applicationPath: string, applicationIdentifier: string): IFuture<void>;
-	sendNotification(notification: string): IFuture<void>;
-	getApplicationPath(deviceId: string, applicationIdentifier: string): IFuture<string>;
-	getInstalledApplications(deviceId: string): IFuture<IApplication[]>;
-	installApplication(deviceId: string, applicationPath: string): IFuture<void>;
-	uninstallApplication(deviceId: string, appIdentifier: string): IFuture<void>;
-	startApplication(deviceId: string, appIdentifier: string): IFuture<string>;
-	stopApplication(deviceId: string, appIdentifier: string): IFuture<string>;
+	getDevices(): IDevice[];
+	getSdks(): ISdk[];
+	run(applicationPath: string, applicationIdentifier: string): void;
+	sendNotification(notification: string): void;
+	getApplicationPath(deviceId: string, applicationIdentifier: string): string;
+	getInstalledApplications(deviceId: string): IApplication[];
+	installApplication(deviceId: string, applicationPath: string): void;
+	uninstallApplication(deviceId: string, appIdentifier: string): void;
+	startApplication(deviceId: string, appIdentifier: string): string;
+	stopApplication(deviceId: string, appIdentifier: string): string;
 	printDeviceLog(deviceId: string, launchResult?: string): any;
 	getDeviceLogProcess(deviceId: string): any;
-	startSimulator(): IFuture<void>;
+	startSimulator(): void;
 }
 
 interface INameGetter {
@@ -79,7 +74,7 @@ interface IExecuteOptions {
 interface ISdk {
 	displayName: string;
 	version: string;
-	rootPath: string;
+	rootPath?: string;
 }
 
 interface IXcodeVersionData {

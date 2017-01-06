@@ -1,60 +1,47 @@
-///<reference path="./.d.ts"/>
-"use strict";
-
 import * as child_process from "child_process";
-import * as errors from "./errors";
-import Future = require("fibers/future");
-import * as util from "util";
 
-export function exec(command: string, opts?: any): IFuture<any> {
-	var future = new Future<any>();
-
-	child_process.exec(command, (error: Error, stdout: NodeBuffer, stderr: NodeBuffer) => {
-		if(error) {
-			if (opts && opts.skipError) {
-				future.return(error);
-			} else {
-				future.throw(new Error(`Error ${error.message} while executing ${command}.`));
-			}
+export function execSync(command: string, opts?: any): any {
+	try {
+		return child_process.execSync(command, opts);
+	} catch (err) {
+		if (opts && opts.skipError) {
+			return err;
 		} else {
-			future.return(stdout ? stdout.toString() : "");
+			throw (new Error(`Error ${err.message} while executing ${command}.`));
 		}
-	});
-
-	return future;
+	}
 }
 
-export function spawn(command: string, args: string[], opts?: any): IFuture<string> {
-	let future = new Future<string>();
-	let capturedOut = "";
-	let capturedErr = "";
+export function spawn(command: string, args: string[], opts?: any): Promise<string> {
+	return new Promise<string>((resolve, reject) => {
+		let capturedOut = "";
+		let capturedErr = "";
 
-	let childProcess = child_process.spawn(command, args);
+		let childProcess = child_process.spawn(command, args);
 
-	if(childProcess.stdout) {
-		childProcess.stdout.on("data", (data: string) => {
-			capturedOut +=  data;
-		});
-	}
-
-	if(childProcess.stderr) {
-		childProcess.stderr.on("data", (data: string) => {
-			capturedErr += data;
-		});
-	}
-
-	childProcess.on("close", (arg: any) => {
-		var exitCode = typeof arg === 'number' ? arg : arg && arg.code;
-		if(exitCode === 0) {
-			future.return(capturedOut ? capturedOut.trim() : null);
-		} else {
-			if (opts && opts.skipError) {
-				future.return(capturedErr);
-			} else {
-				future.throw(new Error(util.format("Command %s with arguments %s failed with exit code %s. Error output:\n %s", command, args.join(" "), exitCode, capturedErr)));
-			}
+		if (childProcess.stdout) {
+			childProcess.stdout.on("data", (data: string) => {
+				capturedOut += data;
+			});
 		}
-	});
 
-	return future;
+		if (childProcess.stderr) {
+			childProcess.stderr.on("data", (data: string) => {
+				capturedErr += data;
+			});
+		}
+
+		childProcess.on("close", (arg: any) => {
+			var exitCode = typeof arg === 'number' ? arg : arg && arg.code;
+			if (exitCode === 0) {
+				resolve(capturedOut ? capturedOut.trim() : null);
+			} else {
+				if (opts && opts.skipError) {
+					resolve(capturedErr);
+				} else {
+					reject(new Error(`Command ${command} with arguments ${args.join(" ")} failed with exit code ${exitCode}. Error output:\n ${capturedErr}`));
+				}
+			}
+		});
+	});
 }
