@@ -4,6 +4,7 @@
   "description": "",
   "main": "./lib/ios-sim.js",
   "scripts": {
+    "prepublish": "node prepublish.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "bin": {

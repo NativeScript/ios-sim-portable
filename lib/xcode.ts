@@ -1,7 +1,7 @@
 import childProcess = require("./child-process");
 
 export function getPathFromXcodeSelect(): string {
-	return childProcess.execSync("xcode-select", ["-print-path"]);
+	return childProcess.execSync("xcode-select -print-path").toString().trim();
 }
 
 export function getXcodeVersionData(): IXcodeVersionData {
