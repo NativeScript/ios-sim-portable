@@ -20,6 +20,7 @@ Object.defineProperty(publicApi, "getRunningSimulator", {
 				let timer = setInterval(() => {
 					let result = simulator.getBootedDevice.apply(simulator, args);
 					if ((result || !repeatCount) && !isResolved) {
+						isResolved = true;
 						clearInterval(timer);
 						resolve(result);
 					}
