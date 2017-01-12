@@ -1,15 +1,17 @@
-///<reference path="./.d.ts"/>
-"use strict";
-
-import * as Fiber from "fibers";
-
 export function stringify(arr: string[], delimiter?: string): string {
 	delimiter = delimiter || ", ";
 	return arr.join(delimiter);
 }
 
+export function getCurrentEpochTime(): number {
+	let dateTime = new Date();
+	return dateTime.getTime();
+}
+
 export function sleep(ms: number): void {
-	let fiber = Fiber.current;
-	setTimeout(() => fiber.run(), ms);
-	Fiber.yield();
+	let startTime = getCurrentEpochTime();
+	let currentTime = getCurrentEpochTime();
+	while ((currentTime - startTime) < ms) {
+		currentTime = getCurrentEpochTime();
+	}
 }

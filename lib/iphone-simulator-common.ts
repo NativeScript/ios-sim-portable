@@ -1,9 +1,5 @@
-///<reference path="./.d.ts"/>
-"use strict";
-
 import childProcess = require("./child-process");
 import xcode = require("./xcode");
-import Future = require("fibers/future");
 import * as fs from "fs";
 import * as path from "path";
 import * as os from "os";
@@ -16,30 +12,28 @@ let isDeviceLogOperationStarted = false;
 let pid: string;
 let deviceLogChildProcess: any;
 
-export function getInstalledApplications(deviceId: string): IFuture<IApplication[]> {
-	return (() => {
-		let rootApplicationsPath = path.join(osenv.home(), `/Library/Developer/CoreSimulator/Devices/${deviceId}/data/Containers/Bundle/Application`);
-		if (!fs.existsSync(rootApplicationsPath)) {
-			rootApplicationsPath = path.join(osenv.home(), `/Library/Developer/CoreSimulator/Devices/${deviceId}/data/Applications`);
+export function getInstalledApplications(deviceId: string): IApplication[] {
+	let rootApplicationsPath = path.join(osenv.home(), `/Library/Developer/CoreSimulator/Devices/${deviceId}/data/Containers/Bundle/Application`);
+	if (!fs.existsSync(rootApplicationsPath)) {
+		rootApplicationsPath = path.join(osenv.home(), `/Library/Developer/CoreSimulator/Devices/${deviceId}/data/Applications`);
+	}
+	let applicationGuids = fs.readdirSync(rootApplicationsPath);
+	let result: IApplication[] = [];
+	_.each(applicationGuids, applicationGuid => {
+		let fullApplicationPath = path.join(rootApplicationsPath, applicationGuid);
+		if (fs.statSync(fullApplicationPath).isDirectory()) {
+			let applicationDirContents = fs.readdirSync(fullApplicationPath);
+			let applicationName = _.find(applicationDirContents, fileName => path.extname(fileName) === ".app");
+			let plistFilePath = path.join(fullApplicationPath, applicationName, "Info.plist");
+			result.push({
+				guid: applicationGuid,
+				appIdentifier: getBundleIdentifier(plistFilePath),
+				path: path.join(fullApplicationPath, applicationName)
+			});
 		}
-		let applicationGuids = fs.readdirSync(rootApplicationsPath);
-		let result: IApplication[] = [];
-		_.each(applicationGuids, applicationGuid => {
-			let fullApplicationPath = path.join(rootApplicationsPath, applicationGuid);
-			if (fs.statSync(fullApplicationPath).isDirectory()) {
-				let applicationDirContents = fs.readdirSync(fullApplicationPath);
-				let applicationName = _.find(applicationDirContents, fileName => path.extname(fileName) === ".app");
-				let plistFilePath = path.join(fullApplicationPath, applicationName, "Info.plist");
-				result.push({
-					guid: applicationGuid,
-					appIdentifier: getBundleIdentifier(plistFilePath).wait(),
-					path: path.join(fullApplicationPath, applicationName)
-				});
-			}
-		});
+	});
 
-		return result;
-	}).future<IApplication[]>()();
+	return result;
 }
 
 export function printDeviceLog(deviceId: string, launchResult?: string): any {
@@ -90,36 +84,20 @@ export function getDeviceLogProcess(deviceId: string): any {
 	return deviceLogChildProcess;
 }
 
-export function startSimulator(deviceId: string): IFuture<void> {
-	return (() => {
-		let simulatorPath = path.resolve(xcode.getPathFromXcodeSelect().wait(), "Applications", "Simulator.app");
-		let args = [simulatorPath, '--args', '-CurrentDeviceUDID', deviceId];
-		childProcess.spawn("open", args).wait();
-	}).future<void>()();
+export function startSimulator(deviceId: string): void {
+	let simulatorPath = path.resolve(xcode.getPathFromXcodeSelect(), "Applications", "Simulator.app");
+	let args = ["open", simulatorPath, '--args', '-CurrentDeviceUDID', deviceId];
+	childProcess.execSync(args.join(" "));
 }
 
-function parseFile(plistFilePath: string): IFuture<any> {
-	let future = new Future<any>();
-	bplistParser.parseFile(plistFilePath, (err: Error, obj: any) => {
-		if (err) {
-			future.throw(err);
-		} else {
-			future.return(obj);
-		}
-	});
-	return future;
-}
+function getBundleIdentifier(plistFilePath: string): string {
+	let plistData: any;
+	try {
+		plistData = bplistParser.parseFileSync(plistFilePath)[0];
+	} catch (err) {
+		let content = fs.readFileSync(plistFilePath).toString();
+		plistData = plist.parse(content);
+	}
 
-function getBundleIdentifier(plistFilePath: string): IFuture<string> {
-	return (() => {
-		let plistData: any;
-		try {
-			plistData = parseFile(plistFilePath).wait()[0];
-		} catch (err) {
-			let content = fs.readFileSync(plistFilePath).toString();
-			plistData = plist.parse(content);
-		}
-
-		return plistData && plistData.CFBundleIdentifier;
-	}).future<string>()();
+	return plistData && plistData.CFBundleIdentifier;
 }

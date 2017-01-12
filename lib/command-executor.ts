@@ -1,7 +1,3 @@
-///<reference path="./.d.ts"/>
-"use strict";
-
-import Future = require("fibers/future");
 import fs = require("fs");
 import path = require("path");
 import util = require("util");
@@ -12,39 +8,37 @@ import options = require("./options");
 
 export class CommandExecutor implements ICommandExecutor {
 
-	public execute(): IFuture<void> {
+	public execute(): void {
 		var commandName = this.getCommandName();
 		var commandArguments = this.getCommandArguments();
 
 		return this.executeCore(commandName, commandArguments);
 	}
 
-	private executeCore(commandName: string, commandArguments: string[]): IFuture<void> {
-		return (() => {
-			try {
-				let filePath = path.join(__dirname, "commands", commandName + ".js");
-				if(fs.existsSync(filePath)) {
-					var command: ICommand = new (require(filePath).Command)();
-					if(!command) {
-						errors.fail("Unable to resolve commandName %s", commandName);
-					}
-
-					command.execute(commandArguments).wait();
+	private executeCore(commandName: string, commandArguments: string[]): void {
+		try {
+			let filePath = path.join(__dirname, "commands", commandName + ".js");
+			if (fs.existsSync(filePath)) {
+				var command: ICommand = new (require(filePath).Command)();
+				if (!command) {
+					errors.fail("Unable to resolve commandName %s", commandName);
 				}
 
-			} catch(e) {
-				if(options.debug) {
-					throw e;
-				} else {
-					console.log( "\x1B[31;1m" + e.message + "\x1B[0m");
-				}
+				command.execute(commandArguments);
 			}
-		}).future<void>()();
+
+		} catch (e) {
+			if (options.debug) {
+				throw e;
+			} else {
+				console.log("\x1B[31;1m" + e.message + "\x1B[0m");
+			}
+		}
 	}
 
 	private getCommandArguments(): string[] {
 		var remaining = options._;
-		return remaining.length > 1 ? remaining.slice(1): [];
+		return remaining.length > 1 ? remaining.slice(1) : [];
 	}
 
 	private getCommandName(): string {
