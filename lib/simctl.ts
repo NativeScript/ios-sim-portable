@@ -87,11 +87,14 @@ export class Simctl implements ISimctl {
 			for (let line of match[0].split('\n').slice(1)) {
 				// a line is something like
 				//    iPhone 4s (A99FFFC3-8E19-4DCF-B585-7D9D46B4C16E) (Shutdown)
+				//    iPad Air 2 (9696A8ED-3020-49FC-90D6-DAFD29A0EA8D) (Shutdown)
+				//    iPad Pro (9.7 inch) (7FF984D4-0755-432D-BE0E-6EB44F0489CB) (Shutdown)
+				//    iPad Pro (12.9 inch) (F02012C8-6D4D-46FF-90D7-5DF90EF579E8) (Booted)
 				// retrieve:
 				//   iPhone 4s
 				//   A99FFFC3-8E19-4DCF-B585-7D9D46B4C16E
 				//   Shutdown
-				let lineRegex = /^    ([^\(]+) \(([^\)]+)\) \(([^\)]+)\)( \(([^\)]+)\))*/;
+				let lineRegex = /^\s+(.*?)\s+\(([0-9A-F]{8}(?:-[0-9A-F]{4}){3}-[0-9A-F]{12})\)\s+\((.*?)\)(\s+\((?:.*?)\))?/;
 				let lineMatch = lineRegex.exec(line);
 				if (lineMatch === null) {
 					errors.fail('Could not match line. ' + line);
