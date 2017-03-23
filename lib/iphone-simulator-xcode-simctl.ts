@@ -149,19 +149,19 @@ export class XCodeSimctlSimulator extends IPhoneSimulatorNameGetter implements I
 		device = device || this.getDeviceToRun();
 		if (!this.isDeviceBooted(device)) {
 			let bootedDevice = this.getBootedDevice();
-			if(bootedDevice && bootedDevice.id !== device.id) {
-				 this.killSimulator();
+			if (bootedDevice && bootedDevice.id !== device.id) {
+				this.killSimulator();
 			}
 
 			common.startSimulator(device.id);
 			// startSimulaltor doesn't always finish immediately, and the subsequent
 			// install fails since the simulator is not running.
 			// Give it some time to start before we attempt installing.
-			utils.sleep(1000); 
+			utils.sleep(1000);
 		}
 	}
- 
-	private killSimulator(): Promise<any> {
+
+	private killSimulator(): void {
 		childProcess.execSync("pkill -9 -f Simulator");
 	}
 }
