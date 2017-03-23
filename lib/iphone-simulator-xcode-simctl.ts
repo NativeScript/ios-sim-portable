@@ -40,11 +40,11 @@ export class XCodeSimctlSimulator extends IPhoneSimulatorNameGetter implements I
 		});
 	}
 
-	public async run(applicationPath: string, applicationIdentifier: string): void {
+	public run(applicationPath: string, applicationIdentifier: string): void {
 		let device = this.getDeviceToRun();
 		let currentBootedDevice = _.find(this.getDevices(), device => this.isDeviceBooted(device));
 		if (currentBootedDevice && (currentBootedDevice.name.toLowerCase() !== device.name.toLowerCase() || currentBootedDevice.runtimeVersion !== device.runtimeVersion)) {
-			await this.killSimulator();
+			this.killSimulator();
 		}
 
 		this.startSimulator(device);
@@ -145,23 +145,23 @@ export class XCodeSimctlSimulator extends IPhoneSimulatorNameGetter implements I
 		return _.find(devices, device => this.isDeviceBooted(device));
 	}
 
-	public async startSimulator(device?: IDevice): void {
+	public startSimulator(device?: IDevice): void {
 		device = device || this.getDeviceToRun();
 		if (!this.isDeviceBooted(device)) {
 			let bootedDevice = this.getBootedDevice();
 			if(bootedDevice && bootedDevice.id !== device.id) {
-				await this.killSimulator();
+				 this.killSimulator();
 			}
 
 			common.startSimulator(device.id);
 			// startSimulaltor doesn't always finish immediately, and the subsequent
 			// install fails since the simulator is not running.
 			// Give it some time to start before we attempt installing.
-			utils.sleep(1000);
+			utils.sleep(1000); 
 		}
 	}
-
-	private async killSimulator(): Promise<any> {
-		return childProcess.spawn("pkill", ["-9", "-f", "Simulator"]);
+ 
+	private killSimulator(): Promise<any> {
+		childProcess.execSync("pkill -9 -f Simulator");
 	}
 }
