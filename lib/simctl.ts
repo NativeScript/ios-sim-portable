@@ -27,6 +27,10 @@ export class Simctl implements ISimctl {
 		return result;
 	}
 
+	public terminate(deviceId: string, appIdentifier: string): string {
+		return this.simctlExec("terminate", [deviceId, appIdentifier]);
+	}
+
 	public install(deviceId: string, applicationPath: string): void {
 		return this.simctlExec("install", [deviceId, applicationPath]);
 	}
