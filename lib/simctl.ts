@@ -1,4 +1,5 @@
 import childProcess = require("./child-process");
+import nodeChildProcess = require("child_process");
 import errors = require("./errors");
 import options = require("./options");
 import * as _ from "lodash";
@@ -117,9 +118,6 @@ export class Simctl implements ISimctl {
 	}
 
 	private simctlExec(command: string, args: string[], opts?: any): any {
-		let escapedArgs = args.map((arg) => `"${arg}"`);
-		let fullCommand = (["xcrun", "simctl", command].concat(escapedArgs)).join(" ");
-
-		return childProcess.execSync(fullCommand, opts).toString().trim();
+		return nodeChildProcess.spawnSync("xcrun", ["simctl", command].concat(args), opts).stdout.toString().trim();
 	}
 }
