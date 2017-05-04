@@ -117,7 +117,10 @@ export class Simctl implements ISimctl {
 	}
 
 	private simctlExec(command: string, args: string[], opts?: any): any {
-		let fullCommand = (["xcrun", "simctl", command].concat(args)).join(" ");
-		return childProcess.execSync(fullCommand, opts).toString().trim();
+		let result = childProcess.spawnSync("xcrun", ["simctl", command].concat(args), opts);
+		if(result && result.stdout) {
+			return result.stdout.toString().trim();
+		}
+		return '';
 	}
 }

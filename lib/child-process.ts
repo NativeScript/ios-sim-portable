@@ -12,6 +12,18 @@ export function execSync(command: string, opts?: any): any {
 	}
 }
 
+export function spawnSync(command: string, args: string[], opts?: any): any {
+	try {
+		return child_process.spawnSync(command, args, opts);
+	} catch (err) {
+		if (opts && opts.skipError) {
+			return err;
+		} else {
+			throw (new Error(`Error ${err.message} while executing ${command}.`));
+		}
+	}
+}
+
 export function spawn(command: string, args: string[], opts?: any): Promise<string> {
 	return new Promise<string>((resolve, reject) => {
 		let capturedOut = "";
