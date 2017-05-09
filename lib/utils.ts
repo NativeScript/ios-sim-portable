@@ -1,3 +1,5 @@
+import * as childProcess from "./child-process";
+
 export function stringify(arr: string[], delimiter?: string): string {
 	delimiter = delimiter || ", ";
 	return arr.join(delimiter);
@@ -8,10 +10,6 @@ export function getCurrentEpochTime(): number {
 	return dateTime.getTime();
 }
 
-export function sleep(ms: number): void {
-	let startTime = getCurrentEpochTime();
-	let currentTime = getCurrentEpochTime();
-	while ((currentTime - startTime) < ms) {
-		currentTime = getCurrentEpochTime();
-	}
+export function sleep(seconds: number): void {
+	childProcess.execSync(`sleep ${seconds}`);
 }

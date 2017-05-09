@@ -28,6 +28,7 @@ interface IDevice {
 
 interface ISimctl {
 	launch(deviceId: string, applicationIdentifier: string): string;
+	terminate(deviceId: string, appIdentifier: string): string;
 	install(deviceId: string, applicationPath: string): void;
 	uninstall(deviceId: string, applicationIdentifier: string, opts?: any): void;
 	notifyPost(deviceId: string, notification: string): void;
@@ -49,7 +50,7 @@ interface ISimulator extends INameGetter {
 	installApplication(deviceId: string, applicationPath: string): void;
 	uninstallApplication(deviceId: string, appIdentifier: string): void;
 	startApplication(deviceId: string, appIdentifier: string): string;
-	stopApplication(deviceId: string, appIdentifier: string): string;
+	stopApplication(deviceId: string, appIdentifier: string, bundleExecutable: string): string;
 	printDeviceLog(deviceId: string, launchResult?: string): any;
 	getDeviceLogProcess(deviceId: string): any;
 	startSimulator(): void;

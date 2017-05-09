@@ -87,9 +87,26 @@ export class XCodeSimctlSimulator extends IPhoneSimulatorNameGetter implements I
 		return this.simctl.launch(deviceId, appIdentifier);
 	}
 
-	public stopApplication(deviceId: string, cfBundleExecutable: string): string {
+	public stopApplication(deviceId: string, appIdentifier: string, bundleExecutable: string): string {
 		try {
-			return childProcess.execSync(`killall ${cfBundleExecutable}`, { skipError: true });
+			let xcodeMajorVersion: number = null;
+			try {
+				const xcodeVersion = xcode.getXcodeVersionData();
+				xcodeMajorVersion = +xcodeVersion.major;
+			} catch(err) {
+				// Ignore the error.
+			}
+
+			if (xcodeMajorVersion && xcodeMajorVersion < 8) {
+				// Xcode 7.x does not have support for `xcrun simctl terminate` command
+				const resultOfKill = childProcess.execSync(`killall ${bundleExecutable}`, { skipError: true });
+				// killall command does not terminate the processes immediately and we have to wait a little bit,
+				// just to ensure all related processes and services are dead.
+				utils.sleep(0.5);
+				return resultOfKill;
+			} else {
+				return this.simctl.terminate(deviceId, appIdentifier);
+			}
 		} catch (e) {
 		}
 	}
@@ -157,7 +174,7 @@ export class XCodeSimctlSimulator extends IPhoneSimulatorNameGetter implements I
 			// startSimulaltor doesn't always finish immediately, and the subsequent
 			// install fails since the simulator is not running.
 			// Give it some time to start before we attempt installing.
-			utils.sleep(1000);
+			utils.sleep(1);
 		}
 	}
 

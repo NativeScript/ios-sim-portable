@@ -6,7 +6,7 @@ export function getPathFromXcodeSelect(): string {
 
 export function getXcodeVersionData(): IXcodeVersionData {
 	let rawData = childProcess.execSync("xcodebuild -version");
-	let lines = rawData.split("\n");
+	let lines = rawData.toString().split("\n");
 	let parts = lines[0].split(" ")[1].split(".");
 	return {
 		major: parts[0],
