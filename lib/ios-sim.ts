@@ -59,7 +59,8 @@ Object.defineProperty(publicApi, "getInstalledApplications", {
 	"printDeviceLog",
 	"getDeviceLogProcess",
 	"startSimulator",
-	"getSimulatorName"].forEach(methodName => {
+	"getSimulatorName",
+	"getDevices"].forEach(methodName => {
 		Object.defineProperty(publicApi, methodName, {
 			get: () => {
 				return (...args: any[]) => {
