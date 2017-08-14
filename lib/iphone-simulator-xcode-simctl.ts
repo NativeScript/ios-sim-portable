@@ -164,6 +164,9 @@ export class XCodeSimctlSimulator extends IPhoneSimulatorNameGetter implements I
 
 	public startSimulator(device?: IDevice): void {
 		device = device || this.getDeviceToRun();
+
+		this.verifyDevice(device);
+
 		if (!this.isDeviceBooted(device)) {
 			let bootedDevice = this.getBootedDevice();
 			if (bootedDevice && bootedDevice.id !== device.id) {
@@ -175,6 +178,14 @@ export class XCodeSimctlSimulator extends IPhoneSimulatorNameGetter implements I
 			// install fails since the simulator is not running.
 			// Give it some time to start before we attempt installing.
 			utils.sleep(1);
+		}
+	}
+
+	private verifyDevice(device?: IDevice): void {
+		const availableDevices = this.getDevices();
+
+		if (!_.find(availableDevices, { id: device.id })) {
+			errors.fail(`No simulator image available for device identifier '${device.id}'.`);
 		}
 	}
 
