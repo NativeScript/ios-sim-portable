@@ -93,7 +93,7 @@ export class XCodeSimctlSimulator extends IPhoneSimulatorNameGetter implements I
 			try {
 				const xcodeVersion = xcode.getXcodeVersionData();
 				xcodeMajorVersion = +xcodeVersion.major;
-			} catch(err) {
+			} catch (err) {
 				// Ignore the error.
 			}
 
@@ -165,7 +165,10 @@ export class XCodeSimctlSimulator extends IPhoneSimulatorNameGetter implements I
 	public startSimulator(device?: IDevice): void {
 		device = device || this.getDeviceToRun();
 
-		this.verifyDevice(device);
+		// In case the id is undefined, skip verification - we'll start default simulator.
+		if (device.id) {
+			this.verifyDevice(device);
+		}
 
 		if (!this.isDeviceBooted(device)) {
 			let bootedDevice = this.getBootedDevice();
@@ -181,9 +184,8 @@ export class XCodeSimctlSimulator extends IPhoneSimulatorNameGetter implements I
 		}
 	}
 
-	private verifyDevice(device?: IDevice): void {
+	private verifyDevice(device: IDevice): void {
 		const availableDevices = this.getDevices();
-
 		if (!_.find(availableDevices, { id: device.id })) {
 			errors.fail(`No simulator image available for device identifier '${device.id}'.`);
 		}
