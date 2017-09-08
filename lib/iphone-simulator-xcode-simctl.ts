@@ -97,16 +97,20 @@ export class XCodeSimctlSimulator extends IPhoneSimulatorNameGetter implements I
 				// Ignore the error.
 			}
 
+			let resultOfTermination: string;
 			if (xcodeMajorVersion && xcodeMajorVersion < 8) {
 				// Xcode 7.x does not have support for `xcrun simctl terminate` command
-				const resultOfKill = childProcess.execSync(`killall ${bundleExecutable}`, { skipError: true });
-				// killall command does not terminate the processes immediately and we have to wait a little bit,
-				// just to ensure all related processes and services are dead.
-				utils.sleep(0.5);
-				return resultOfKill;
+				resultOfTermination = childProcess.execSync(`killall ${bundleExecutable}`, { skipError: true });
 			} else {
-				return this.simctl.terminate(deviceId, appIdentifier);
+				resultOfTermination = this.simctl.terminate(deviceId, appIdentifier);
 			}
+
+			// killall command does not terminate the processes immediately and we have to wait a little bit,
+			// just to ensure all related processes and services are dead.
+			// Same is valid for simctl terminate when Simulator's OS version is below 10.
+			utils.sleep(0.5);
+
+			return resultOfTermination;
 		} catch (e) {
 		}
 	}
