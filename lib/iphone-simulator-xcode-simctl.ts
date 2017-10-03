@@ -15,8 +15,12 @@ import * as _ from "lodash";
 
 import { IPhoneSimulatorNameGetter } from "./iphone-simulator-name-getter";
 
+const osenv = require("osenv");
+
 export class XCodeSimctlSimulator extends IPhoneSimulatorNameGetter implements ISimulator {
 	private static DEVICE_IDENTIFIER_PREFIX = "com.apple.CoreSimulator.SimDeviceType";
+	private deviceLogChildProcess: any = null;
+	private isDeviceLogOperationStarted = false;
 	public defaultDeviceIdentifier = "iPhone 6";
 
 	private simctl: ISimctl = null;
@@ -116,11 +120,63 @@ export class XCodeSimctlSimulator extends IPhoneSimulatorNameGetter implements I
 	}
 
 	public printDeviceLog(deviceId: string, launchResult?: string): any {
-		return common.printDeviceLog(deviceId, launchResult);
+		let pid = "";
+		let deviceLogChildProcess;
+
+		if (launchResult) {
+			pid = launchResult.split(":")[1].trim();
+		}
+
+		if (!this.isDeviceLogOperationStarted) {
+			deviceLogChildProcess = this.getDeviceLogProcess(deviceId);
+			if (deviceLogChildProcess.stdout) {
+				deviceLogChildProcess.stdout.on("data", (data: NodeBuffer) => {
+					let dataAsString = data.toString();
+					if (pid) {
+						if (dataAsString.indexOf(`[${pid}]`) > -1 || dataAsString.indexOf(` ${pid} `) > -1) {
+							process.stdout.write(dataAsString);
+						}
+					} else {
+						process.stdout.write(dataAsString);
+					}
+				});
+			}
+
+			if (deviceLogChildProcess.stderr) {
+				deviceLogChildProcess.stderr.on("data", (data: string) => {
+					let dataAsString = data.toString();
+					if (pid) {
+						if (dataAsString.indexOf(`[${pid}]`) > -1 || dataAsString.indexOf(` ${pid} `) > -1) {
+							process.stdout.write(dataAsString);
+						}
+					} else {
+						process.stdout.write(dataAsString);
+					}
+					process.stdout.write(data.toString());
+				});
+			}
+		}
+
+		return deviceLogChildProcess;
 	}
 
 	public getDeviceLogProcess(deviceId: string): any {
-		return common.getDeviceLogProcess(deviceId);
+		const device = this.getDeviceFromIdentifier(deviceId) || {};
+		const deviceVersion = this.getDeviceFromIdentifier(deviceId).runtimeVersion || "";
+		const majorVersion = deviceVersion.split(".")[0];
+
+		if (!this.isDeviceLogOperationStarted) {
+			if(majorVersion && parseInt(majorVersion) >= 11) {
+				this.deviceLogChildProcess = this.simctl.getLog(deviceId);
+			} else {
+				let logFilePath = path.join(osenv.home(), "Library", "Logs", "CoreSimulator", deviceId, "system.log");
+				this.deviceLogChildProcess = require("child_process").spawn("tail", ['-f', '-n', '1', logFilePath]);
+			}
+
+			this.isDeviceLogOperationStarted = true;
+		}
+
+		return this.deviceLogChildProcess;
 	}
 
 	private getDeviceToRun(): IDevice {
@@ -193,6 +249,12 @@ export class XCodeSimctlSimulator extends IPhoneSimulatorNameGetter implements I
 		if (!_.find(availableDevices, { id: device.id })) {
 			errors.fail(`No simulator image available for device identifier '${device.id}'.`);
 		}
+	}
+
+	private getDeviceFromIdentifier(deviceId: string) {
+		const availableDevices = this.getDevices();
+
+		return _.find(availableDevices, { id: deviceId });
 	}
 
 	private killSimulator(): void {
