@@ -33,6 +33,7 @@ interface ISimctl {
 	uninstall(deviceId: string, applicationIdentifier: string, opts?: any): void;
 	notifyPost(deviceId: string, notification: string): void;
 	getDevices(): IDevice[];
+	getLog(deviceId: string): any;
 	getAppContainer(deviceId: string, applicationIdentifier: string): string;
 }
 
