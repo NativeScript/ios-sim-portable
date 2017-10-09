@@ -121,8 +121,14 @@ export class Simctl implements ISimctl {
 		return devices;
 	}
 
-	public getLog(deviceId: string): any {
-		return this.simctlSpawn("spawn", [deviceId, "log", "stream"]);
+	public getLog(deviceId: string, predicate?: string): child_process.ChildProcess {
+		let predicateArgs: string[] = [];
+
+		if (predicate) {
+			predicateArgs = ["--predicate", predicate];
+		}
+
+		return this.simctlSpawn("spawn", [deviceId, "log", "stream", "--style", "syslog"].concat(predicateArgs));
 	}
 
 	private simctlExec(command: string, args: string[], opts?: any): string {
@@ -142,7 +148,7 @@ export class Simctl implements ISimctl {
 		return '';
 	}
 
-	private simctlSpawn(command: string, args: string[], opts?: any): any {
+	private simctlSpawn(command: string, args: string[], opts?: child_process.SpawnOptions): child_process.ChildProcess {
 		return child_process.spawn("xcrun", ["simctl", command].concat(args), opts);
 	}
 }

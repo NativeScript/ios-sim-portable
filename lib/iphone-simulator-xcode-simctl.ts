@@ -2,6 +2,7 @@
 "use strict";
 
 import childProcess = require("./child-process");
+import * as child_process from "child_process";
 import errors = require("./errors");
 
 import common = require("./iphone-simulator-common");
@@ -119,7 +120,7 @@ export class XCodeSimctlSimulator extends IPhoneSimulatorNameGetter implements I
 		}
 	}
 
-	public printDeviceLog(deviceId: string, launchResult?: string): any {
+	public printDeviceLog(deviceId: string, launchResult?: string): child_process.ChildProcess {
 		let pid = "";
 		let deviceLogChildProcess;
 
@@ -130,46 +131,39 @@ export class XCodeSimctlSimulator extends IPhoneSimulatorNameGetter implements I
 		if (!this.isDeviceLogOperationStarted) {
 			deviceLogChildProcess = this.getDeviceLogProcess(deviceId);
 			if (deviceLogChildProcess.stdout) {
-				deviceLogChildProcess.stdout.on("data", (data: NodeBuffer) => {
-					let dataAsString = data.toString();
-					if (pid) {
-						if (dataAsString.indexOf(`[${pid}]`) > -1 || dataAsString.indexOf(` ${pid} `) > -1) {
-							process.stdout.write(dataAsString);
-						}
-					} else {
-						process.stdout.write(dataAsString);
-					}
-				});
+				deviceLogChildProcess.stdout.on("data", this.logDataHandler.bind(this, pid));
 			}
 
 			if (deviceLogChildProcess.stderr) {
-				deviceLogChildProcess.stderr.on("data", (data: string) => {
-					let dataAsString = data.toString();
-					if (pid) {
-						if (dataAsString.indexOf(`[${pid}]`) > -1 || dataAsString.indexOf(` ${pid} `) > -1) {
-							process.stdout.write(dataAsString);
-						}
-					} else {
-						process.stdout.write(dataAsString);
-					}
-					process.stdout.write(data.toString());
-				});
+				deviceLogChildProcess.stderr.on("data", this.logDataHandler.bind(this, pid));
 			}
 		}
 
 		return deviceLogChildProcess;
 	}
 
-	public getDeviceLogProcess(deviceId: string): any {
-		const device = this.getDeviceFromIdentifier(deviceId) || {};
-		const deviceVersion = this.getDeviceFromIdentifier(deviceId).runtimeVersion || "";
-		const majorVersion = deviceVersion.split(".")[0];
+	private logDataHandler(pid: string, logData: NodeBuffer): void {
+		const dataAsString = logData.toString();
 
+		if (pid) {
+			if (dataAsString.indexOf(`[${pid}]`) > -1) {
+				process.stdout.write(dataAsString);
+			}
+		} else {
+			process.stdout.write(dataAsString);
+		}
+	}
+
+	public getDeviceLogProcess(deviceId: string, predicate?: string): child_process.ChildProcess {
 		if (!this.isDeviceLogOperationStarted) {
-			if(majorVersion && parseInt(majorVersion) >= 11) {
-				this.deviceLogChildProcess = this.simctl.getLog(deviceId);
+			const device = this.getDeviceFromIdentifier(deviceId);
+			const deviceVersion = device ? device.runtimeVersion : "";
+			const majorVersion = deviceVersion.split(".")[0];
+
+			if (majorVersion && parseInt(majorVersion) >= 11) {
+				this.deviceLogChildProcess = this.simctl.getLog(deviceId, predicate);
 			} else {
-				let logFilePath = path.join(osenv.home(), "Library", "Logs", "CoreSimulator", deviceId, "system.log");
+				const logFilePath = path.join(osenv.home(), "Library", "Logs", "CoreSimulator", deviceId, "system.log");
 				this.deviceLogChildProcess = require("child_process").spawn("tail", ['-f', '-n', '1', logFilePath]);
 			}
 
