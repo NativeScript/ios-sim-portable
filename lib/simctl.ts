@@ -32,15 +32,15 @@ export class Simctl implements ISimctl {
 	}
 
 	public install(deviceId: string, applicationPath: string): void {
-		return this.simctlExec("install", [deviceId, applicationPath]);
+		this.simctlExec("install", [deviceId, applicationPath]);
 	}
 
 	public uninstall(deviceId: string, appIdentifier: string, opts?: any): void {
-		return this.simctlExec("uninstall", [deviceId, appIdentifier], opts);
+		this.simctlExec("uninstall", [deviceId, appIdentifier], opts);
 	}
 
 	public notifyPost(deviceId: string, notification: string): void {
-		return this.simctlExec("notify_post", [deviceId, notification]);
+		this.simctlExec("notify_post", [deviceId, notification]);
 	}
 
 	public getAppContainer(deviceId: string, appIdentifier: string): string {
@@ -120,11 +120,20 @@ export class Simctl implements ISimctl {
 		return devices;
 	}
 
-	private simctlExec(command: string, args: string[], opts?: any): any {
-		let result = childProcess.spawnSync("xcrun", ["simctl", command].concat(args), opts);
-		if(result && result.stdout) {
-			return result.stdout.toString().trim();
+	private simctlExec(command: string, args: string[], opts?: any): string {
+		const result = childProcess.spawnSync("xcrun", ["simctl", command].concat(args), opts);
+		if (result) {
+			if (result.signal) {
+				// In some cases, sending Ctrl + C (SIGINT) is handled by the simctl itself and spawnSync finishes, but the SIGINT does not stop current process.
+				// In order to ensure the same signal is sent to the caller (CLI for example), send the signal manually:
+				process.send(result.signal);
+			}
+
+			if (result.stdout) {
+				return result.stdout.toString().trim();
+			}
 		}
+
 		return '';
 	}
 }
