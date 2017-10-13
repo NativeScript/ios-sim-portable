@@ -1,4 +1,5 @@
 import childProcess = require("./child-process");
+import * as child_process from "child_process";
 import errors = require("./errors");
 import options = require("./options");
 import * as _ from "lodash";
@@ -120,6 +121,16 @@ export class Simctl implements ISimctl {
 		return devices;
 	}
 
+	public getLog(deviceId: string, predicate?: string): child_process.ChildProcess {
+		let predicateArgs: string[] = [];
+
+		if (predicate) {
+			predicateArgs = ["--predicate", predicate];
+		}
+
+		return this.simctlSpawn("spawn", [deviceId, "log", "stream", "--style", "syslog"].concat(predicateArgs));
+	}
+
 	private simctlExec(command: string, args: string[], opts?: any): string {
 		const result = childProcess.spawnSync("xcrun", ["simctl", command].concat(args), opts);
 		if (result) {
@@ -135,5 +146,9 @@ export class Simctl implements ISimctl {
 		}
 
 		return '';
+	}
+
+	private simctlSpawn(command: string, args: string[], opts?: child_process.SpawnOptions): child_process.ChildProcess {
+		return child_process.spawn("xcrun", ["simctl", command].concat(args), opts);
 	}
 }

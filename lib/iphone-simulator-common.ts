@@ -36,54 +36,6 @@ export function getInstalledApplications(deviceId: string): IApplication[] {
 	return result;
 }
 
-export function printDeviceLog(deviceId: string, launchResult?: string): any {
-	if (launchResult) {
-		pid = launchResult.split(":")[1].trim();
-	}
-
-	if (!isDeviceLogOperationStarted) {
-		deviceLogChildProcess = this.getDeviceLogProcess(deviceId);
-		if (deviceLogChildProcess.stdout) {
-			deviceLogChildProcess.stdout.on("data", (data: NodeBuffer) => {
-				let dataAsString = data.toString();
-				if (pid) {
-					if (dataAsString.indexOf(`[${pid}]`) > -1) {
-						process.stdout.write(dataAsString);
-					}
-				} else {
-					process.stdout.write(dataAsString);
-				}
-			});
-		}
-
-		if (deviceLogChildProcess.stderr) {
-			deviceLogChildProcess.stderr.on("data", (data: string) => {
-				let dataAsString = data.toString();
-				if (pid) {
-					if (dataAsString.indexOf(`[${pid}]`) > -1) {
-						process.stdout.write(dataAsString);
-					}
-				} else {
-					process.stdout.write(dataAsString);
-				}
-				process.stdout.write(data.toString());
-			});
-		}
-	}
-
-	return deviceLogChildProcess;
-}
-
-export function getDeviceLogProcess(deviceId: string): any {
-	if (!isDeviceLogOperationStarted) {
-		let logFilePath = path.join(osenv.home(), "Library", "Logs", "CoreSimulator", deviceId, "system.log");
-		deviceLogChildProcess = require("child_process").spawn("tail", ['-f', '-n', '1', logFilePath]);
-		isDeviceLogOperationStarted = true;
-	}
-
-	return deviceLogChildProcess;
-}
-
 export function startSimulator(deviceId: string): void {
 	let simulatorPath = path.resolve(xcode.getPathFromXcodeSelect(), "Applications", "Simulator.app");
 	let args = ["open", simulatorPath, '--args', '-CurrentDeviceUDID', deviceId];
