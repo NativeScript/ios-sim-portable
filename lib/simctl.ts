@@ -28,6 +28,10 @@ export class Simctl implements ISimctl {
 		return result;
 	}
 
+	public boot(deviceId: string) {
+		return this.simctlExec("boot", [deviceId]);
+	}
+
 	public terminate(deviceId: string, appIdentifier: string): string {
 		return this.simctlExec("terminate", [deviceId, appIdentifier]);
 	}
