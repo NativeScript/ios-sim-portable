@@ -28,6 +28,7 @@ interface IDevice {
 
 interface ISimctl {
 	launch(deviceId: string, applicationIdentifier: string): string;
+	boot(deviceId: string): void;
 	terminate(deviceId: string, appIdentifier: string): string;
 	install(deviceId: string, applicationPath: string): void;
 	uninstall(deviceId: string, applicationIdentifier: string, opts?: any): void;
