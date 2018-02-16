@@ -89,7 +89,11 @@ export class XCodeSimctlSimulator extends IPhoneSimulatorNameGetter implements I
 	}
 
 	public startApplication(deviceId: string, appIdentifier: string): string {
-		return this.simctl.launch(deviceId, appIdentifier);
+		// simctl launch command does not launch the process immediately and we have to wait a little bit,
+		// just to ensure all related processes and services are alive.
+		const launchResult = this.simctl.launch(deviceId, appIdentifier);
+		utils.sleep(0.5);
+		return launchResult;
 	}
 
 	public stopApplication(deviceId: string, appIdentifier: string, bundleExecutable: string): string {
