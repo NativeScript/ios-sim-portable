@@ -31,6 +31,29 @@ Object.defineProperty(publicApi, "getRunningSimulator", {
 	}
 });
 
+Object.defineProperty(publicApi, "getRunningSimulators", {
+	get: () => {
+		return (...args: any[]) => {
+			let isResolved = false;
+
+			return new Promise<any>((resolve, reject) => {
+				const libraryPath = require("./iphone-simulator-xcode-simctl");
+				const simulator = new libraryPath.XCodeSimctlSimulator();
+				let repeatCount = 30;
+				const timer = setInterval(() => {
+					const result = simulator.getBootedDevices.apply(simulator, args);
+					if ((result || !repeatCount) && !isResolved) {
+						isResolved = true;
+						clearInterval(timer);
+						resolve(result);
+					}
+					repeatCount--;
+				}, 500);
+			});
+		}
+	}
+});
+
 Object.defineProperty(publicApi, "getApplicationPath", {
 	get: () => {
 		return (...args: any[]) => {
