@@ -187,11 +187,11 @@ export class XCodeSimctlSimulator extends IPhoneSimulatorNameGetter implements I
 			}
 
 			if (options.device && !sdkVersion) {
-				return device.name === options.device;
+				return device.name === options.device || device.id === options.device;
 			}
 
 			if (options.device && sdkVersion) {
-				return device.runtimeVersion === sdkVersion && device.name === options.device;
+				return device.runtimeVersion === sdkVersion && (device.name === options.device || device.id === options.device);
 			}
 
 			if (!sdkVersion && !options.device) {
