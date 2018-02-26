@@ -220,6 +220,11 @@ export class XCodeSimctlSimulator extends IPhoneSimulatorNameGetter implements I
 		return _.find(devices, device => this.isDeviceBooted(device));
 	}
 
+	private getBootedDevices(): IDevice[] {
+		const devices = this.simctl.getDevices();
+		return _.filter(devices, device => this.isDeviceBooted(device));
+	}
+
 	public startSimulator(device?: IDevice): void {
 		device = device || this.getDeviceToRun();
 
@@ -229,15 +234,17 @@ export class XCodeSimctlSimulator extends IPhoneSimulatorNameGetter implements I
 		}
 
 		if (!this.isDeviceBooted(device)) {
-			let bootedDevice = this.getBootedDevice();
-			if (bootedDevice && bootedDevice.id !== device.id) {
-				this.killSimulator();
-			}
-
-			// In case user closes simulator window but simulator app is still alive
-			if (!bootedDevice && this.isSimulatorAppRunning()) {
-				const defaultDevice = _.find(this.simctl.getDevices(), device => device.name === this.defaultDeviceIdentifier);
-				this.simctl.boot(defaultDevice.id);
+			const isSimulatorAppRunning = this.isSimulatorAppRunning();
+			const haveBootedDevices = this.haveBootedDevices();
+				
+			if (isSimulatorAppRunning) {
+				// In case user closes simulator window but simulator app is still alive
+				if (!haveBootedDevices) {
+					device = this.getDeviceToRun();
+				}
+				this.simctl.boot(device.id);
+			} else {
+				common.startSimulator(device.id);
 			}
 
 			common.startSimulator(device.id);
@@ -246,6 +253,11 @@ export class XCodeSimctlSimulator extends IPhoneSimulatorNameGetter implements I
 			// Give it some time to start before we attempt installing.
 			utils.sleep(1);
 		}
+	}
+
+	private haveBootedDevices(): boolean {
+		const bootedDevices = this.getBootedDevices();
+		return bootedDevices && bootedDevices.length > 0;
 	}
 
 	private isSimulatorAppRunning(): boolean {
