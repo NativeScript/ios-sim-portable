@@ -137,6 +137,9 @@ export class Simctl implements ISimctl {
 
 	private simctlExec(command: string, args: string[], opts?: any): string {
 		const result = childProcess.spawnSync("xcrun", ["simctl", command].concat(args), opts);
+		if (result && result.stderr && !_.isEmpty(result.stderr)) {
+            		throw new Error(`Error while executing command '${["xcrun", "simctl", command].concat(args).join(" ")}'. Please ensure your tools are configured correctly. More info: ${result.stderr.toString()}`);
+        	}
 		if (result) {
 			if (result.signal) {
 				// In some cases, sending Ctrl + C (SIGINT) is handled by the simctl itself and spawnSync finishes, but the SIGINT does not stop current process.
