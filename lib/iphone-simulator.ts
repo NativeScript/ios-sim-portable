@@ -5,7 +5,6 @@ import path = require("path");
 import util = require("util");
 
 import errors = require("./errors");
-import options = require("./options");
 import xcode = require("./xcode");
 
 import { XCodeSimctlSimulator } from "./iphone-simulator-xcode-simctl";
@@ -19,7 +18,7 @@ export class iPhoneSimulator implements IiPhoneSimulator {
 		this.simulator = this.createSimulator();
 	}
 
-	public run(applicationPath: string, applicationIdentifier: string): void {
+	public run(applicationPath: string, applicationIdentifier: string, options: IOptions): string {
 		if (!fs.existsSync(applicationPath)) {
 			errors.fail("Path does not exist ", applicationPath);
 		}
@@ -39,7 +38,7 @@ export class iPhoneSimulator implements IiPhoneSimulator {
 			}
 		}
 
-		return this.simulator.run(applicationPath, applicationIdentifier);
+		return this.simulator.run(applicationPath, applicationIdentifier, options);
 	}
 
 	public printDeviceTypes(): void {
@@ -58,12 +57,12 @@ export class iPhoneSimulator implements IiPhoneSimulator {
 		});
 	}
 
-	public sendNotification(notification: string): void {
+	public sendNotification(notification: string, deviceId: string): void {
 		if (!notification) {
 			errors.fail("Notification required.");
 		}
 
-		return this.simulator.sendNotification(notification);
+		return this.simulator.sendNotification(notification, deviceId);
 	}
 
 	public createSimulator(): ISimulator {

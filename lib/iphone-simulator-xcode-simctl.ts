@@ -6,7 +6,6 @@ import * as child_process from "child_process";
 import errors = require("./errors");
 
 import common = require("./iphone-simulator-common");
-import options = require("./options");
 import path = require("path");
 import { Simctl } from "./simctl";
 import util = require("util");
@@ -45,31 +44,28 @@ export class XCodeSimctlSimulator extends IPhoneSimulatorNameGetter implements I
 		});
 	}
 
-	public run(applicationPath: string, applicationIdentifier: string): void {
-		let device = this.getDeviceToRun();
+	public run(applicationPath: string, applicationIdentifier: string, options: IOptions): string {
+		let device = this.getDeviceToRun(options);
 		let currentBootedDevice = _.find(this.getDevices(), device => this.isDeviceBooted(device));
 		if (currentBootedDevice && (currentBootedDevice.name.toLowerCase() !== device.name.toLowerCase() || currentBootedDevice.runtimeVersion !== device.runtimeVersion)) {
 			this.killSimulator();
 		}
 
-		this.startSimulator(device);
+		this.startSimulator(options, device);
 		if (!options.skipInstall) {
 			this.simctl.install(device.id, applicationPath);
 		}
-		let launchResult = this.simctl.launch(device.id, applicationIdentifier);
 
-		if (options.logging) {
-			this.printDeviceLog(device.id, launchResult);
-		}
+		return this.simctl.launch(device.id, applicationIdentifier, options);
 	}
 
-	public sendNotification(notification: string): void {
-		let device = this.getBootedDevice();
+	public sendNotification(notification: string, deviceId: string): void {
+		let device = this.getDeviceFromIdentifier(deviceId);
 		if (!device) {
 			errors.fail("Could not find device.");
 		}
 
-		this.simctl.notifyPost("booted", notification);
+		this.simctl.notifyPost(deviceId, notification);
 	}
 
 	public getApplicationPath(deviceId: string, applicationIdentifier: string): string {
@@ -88,10 +84,10 @@ export class XCodeSimctlSimulator extends IPhoneSimulatorNameGetter implements I
 		return this.simctl.uninstall(deviceId, appIdentifier, { skipError: true });
 	}
 
-	public startApplication(deviceId: string, appIdentifier: string): string {
+	public startApplication(deviceId: string, appIdentifier: string, options: IOptions): string {
 		// simctl launch command does not launch the process immediately and we have to wait a little bit,
 		// just to ensure all related processes and services are alive.
-		const launchResult = this.simctl.launch(deviceId, appIdentifier);
+		const launchResult = this.simctl.launch(deviceId, appIdentifier, options);
 		utils.sleep(0.5);
 		return launchResult;
 	}
@@ -124,40 +120,6 @@ export class XCodeSimctlSimulator extends IPhoneSimulatorNameGetter implements I
 		}
 	}
 
-	public printDeviceLog(deviceId: string, launchResult?: string): child_process.ChildProcess {
-		let pid = "";
-		let deviceLogChildProcess;
-
-		if (launchResult) {
-			pid = launchResult.split(":")[1].trim();
-		}
-
-		if (!this.isDeviceLogOperationStarted) {
-			deviceLogChildProcess = this.getDeviceLogProcess(deviceId);
-			if (deviceLogChildProcess.stdout) {
-				deviceLogChildProcess.stdout.on("data", this.logDataHandler.bind(this, pid));
-			}
-
-			if (deviceLogChildProcess.stderr) {
-				deviceLogChildProcess.stderr.on("data", this.logDataHandler.bind(this, pid));
-			}
-		}
-
-		return deviceLogChildProcess;
-	}
-
-	private logDataHandler(pid: string, logData: NodeBuffer): void {
-		const dataAsString = logData.toString();
-
-		if (pid) {
-			if (dataAsString.indexOf(`[${pid}]`) > -1) {
-				process.stdout.write(dataAsString);
-			}
-		} else {
-			process.stdout.write(dataAsString);
-		}
-	}
-
 	public getDeviceLogProcess(deviceId: string, predicate?: string): child_process.ChildProcess {
 		if (!this.isDeviceLogOperationStarted) {
 			const device = this.getDeviceFromIdentifier(deviceId);
@@ -177,7 +139,7 @@ export class XCodeSimctlSimulator extends IPhoneSimulatorNameGetter implements I
 		return this.deviceLogChildProcess;
 	}
 
-	private getDeviceToRun(device?: any): IDevice {
+	private getDeviceToRun(options: IOptions, device?: any): IDevice {
 		let devices = _.sortBy(this.simctl.getDevices(), (device) => device.runtimeVersion),
 			sdkVersion = options.sdkVersion || options.sdk,
 			deviceIdOrName = options.device;
@@ -233,14 +195,16 @@ export class XCodeSimctlSimulator extends IPhoneSimulatorNameGetter implements I
 		return _.filter(devices, device => this.isDeviceBooted(device));
 	}
 
-	public startSimulator(device?: IDevice): void {
+	public startSimulator(options: IOptions, device?: IDevice): void {
+		device = device || this.getDeviceToRun(options);
+
 		// In case the id is undefined, skip verification - we'll start default simulator.
 		if (device && device.id) {
 			this.verifyDevice(device);
 		}
 
 		if (!device || !device.runtimeVersion || !device.fullId) {
-			device = this.getDeviceToRun(device);
+			device = this.getDeviceToRun(options, device);
 		}
 
 		if (!this.isDeviceBooted(device)) {
@@ -250,7 +214,7 @@ export class XCodeSimctlSimulator extends IPhoneSimulatorNameGetter implements I
 			if (isSimulatorAppRunning) {
 				// In case user closes simulator window but simulator app is still alive
 				if (!haveBootedDevices) {
-					device = this.getDeviceToRun();
+					device = this.getDeviceToRun(options);
 				}
 				this.simctl.boot(device.id);
 			} else {
