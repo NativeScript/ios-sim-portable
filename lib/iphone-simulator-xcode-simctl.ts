@@ -177,24 +177,33 @@ export class XCodeSimctlSimulator extends IPhoneSimulatorNameGetter implements I
 		return this.deviceLogChildProcess;
 	}
 
-	private getDeviceToRun(): IDevice {
-		let devices = this.simctl.getDevices(),
-			sdkVersion = options.sdkVersion || options.sdk;
+	private getDeviceToRun(device?: any): IDevice {
+		let devices = _.sortBy(this.simctl.getDevices(), (device) => device.runtimeVersion),
+			sdkVersion = options.sdkVersion || options.sdk,
+			deviceIdOrName = options.device;
+
+		if (device && (device.sdkVersion || device.sdk)) {
+			sdkVersion = device.sdkVersion || device.sdk;
+		}
+
+		if (device && device.id) {
+			deviceIdOrName = device.id;
+		}
 
 		let result = _.find(devices, (device: IDevice) => {
-			if (sdkVersion && !options.device) {
+			if (sdkVersion && !deviceIdOrName) {
 				return device.runtimeVersion === sdkVersion;
 			}
 
-			if (options.device && !sdkVersion) {
-				return device.name === options.device || device.id === options.device;
+			if (deviceIdOrName && !sdkVersion) {
+				return device.name === deviceIdOrName || device.id === deviceIdOrName;
 			}
 
-			if (options.device && sdkVersion) {
-				return device.runtimeVersion === sdkVersion && (device.name === options.device || device.id === options.device);
+			if (deviceIdOrName && sdkVersion) {
+				return device.runtimeVersion === sdkVersion && (device.name === deviceIdOrName || device.id === deviceIdOrName);
 			}
 
-			if (!sdkVersion && !options.device) {
+			if (!sdkVersion && !deviceIdOrName) {
 				return this.isDeviceBooted(device);
 			}
 		});
@@ -204,8 +213,7 @@ export class XCodeSimctlSimulator extends IPhoneSimulatorNameGetter implements I
 		}
 
 		if (!result) {
-			let sortedDevices = _.sortBy(devices, (device) => device.runtimeVersion);
-			result = _.last(sortedDevices);
+			result = _.last(devices);
 		}
 
 		return result;
@@ -226,7 +234,9 @@ export class XCodeSimctlSimulator extends IPhoneSimulatorNameGetter implements I
 	}
 
 	public startSimulator(device?: IDevice): void {
-		device = device || this.getDeviceToRun();
+		if (!device || !device.runtimeVersion || !device.fullId) {
+			device = this.getDeviceToRun(device);
+		}
 
 		// In case the id is undefined, skip verification - we'll start default simulator.
 		if (device.id) {
@@ -273,7 +283,7 @@ export class XCodeSimctlSimulator extends IPhoneSimulatorNameGetter implements I
 
 	private verifyDevice(device: IDevice): void {
 		const availableDevices = this.getDevices();
-		if (!_.find(availableDevices, { id: device.id })) {
+		if (!_.find(availableDevices, { id: device.id }) && !_.find(availableDevices, { name: device.id })) {
 			errors.fail(`No simulator image available for device identifier '${device.id}'.`);
 		}
 	}
