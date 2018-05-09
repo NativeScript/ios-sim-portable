@@ -234,13 +234,13 @@ export class XCodeSimctlSimulator extends IPhoneSimulatorNameGetter implements I
 	}
 
 	public startSimulator(device?: IDevice): void {
-		if (!device || !device.runtimeVersion || !device.fullId) {
-			device = this.getDeviceToRun(device);
+		// In case the id is undefined, skip verification - we'll start default simulator.
+		if (device && device.id) {
+			this.verifyDevice(device);
 		}
 
-		// In case the id is undefined, skip verification - we'll start default simulator.
-		if (device.id) {
-			this.verifyDevice(device);
+		if (!device || !device.runtimeVersion || !device.fullId) {
+			device = this.getDeviceToRun(device);
 		}
 
 		if (!this.isDeviceBooted(device)) {
