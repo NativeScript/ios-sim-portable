@@ -235,7 +235,7 @@ export class XCodeSimctlSimulator extends IPhoneSimulatorNameGetter implements I
 
 	public startSimulator(device?: IDevice): void {
 		// In case the id is undefined, skip verification - we'll start default simulator.
-		if (device.id) {
+		if (device && device.id) {
 			this.verifyDevice(device);
 		}
 
