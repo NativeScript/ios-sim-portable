@@ -16,16 +16,32 @@ Object.defineProperty(publicApi, "getRunningSimulator", {
 			return new Promise<any>((resolve, reject) => {
 				let libraryPath = require("./iphone-simulator-xcode-simctl");
 				let simulator = new libraryPath.XCodeSimctlSimulator();
-				let repeatCount = 30;
-				let timer = setInterval(() => {
-					let result = simulator.getBootedDevice.apply(simulator, args);
-					if ((result || !repeatCount) && !isResolved) {
-						isResolved = true;
-						clearInterval(timer);
-						resolve(result);
+
+				const tryGetBootedDevice = () => {
+					try {
+						return simulator.getBootedDevice.apply(simulator, args);
+					} catch (err) {
+						if (!isResolved) {
+							isResolved  = true;
+							reject(err);
+						}
 					}
-					repeatCount--;
-				}, 500);
+				}
+
+				let result = tryGetBootedDevice();
+
+				if (!isResolved && !result) {
+					let repeatCount = 30;
+					let timer = setInterval(() => {
+						result = tryGetBootedDevice();
+						if ((result || !repeatCount) && !isResolved) {
+							isResolved = true;
+							clearInterval(timer);
+							resolve(result);
+						}
+						repeatCount--;
+					}, 500);
+				}
 			});
 		}
 	}
@@ -39,16 +55,32 @@ Object.defineProperty(publicApi, "getRunningSimulators", {
 			return new Promise<any>((resolve, reject) => {
 				const libraryPath = require("./iphone-simulator-xcode-simctl");
 				const simulator = new libraryPath.XCodeSimctlSimulator();
-				let repeatCount = 30;
-				const timer = setInterval(() => {
-					const result = simulator.getBootedDevices.apply(simulator, args);
-					if ((result || !repeatCount) && !isResolved) {
-						isResolved = true;
-						clearInterval(timer);
-						resolve(result);
+				
+				const tryGetBootedDevices = () => {
+					try {
+						return simulator.getBootedDevices.apply(simulator, args);
+					} catch (err) {
+						if (!isResolved) {
+							isResolved = true;
+							reject(err);
+						}
 					}
-					repeatCount--;
-				}, 500);
+				}
+
+				let result = tryGetBootedDevices();
+
+				if (!isResolved && !result) {
+					let repeatCount = 30;
+					const timer = setInterval(() => {
+						result = tryGetBootedDevices();
+						if ((result || !repeatCount) && !isResolved) {
+							isResolved = true;
+							clearInterval(timer);
+							resolve(result);
+						}
+						repeatCount--;
+					}, 500);
+				}
 			});
 		}
 	}
