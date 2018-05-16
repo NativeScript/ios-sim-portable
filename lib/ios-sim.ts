@@ -78,8 +78,8 @@ Object.defineProperty(publicApi, "getInstalledApplications", {
 Object.defineProperty(publicApi, "launchApplication", {
 	get: () => {
 		return (...args: any[]) => {
-			let libraryPath = require("./iphone-simulator");
-			let obj = new libraryPath.iPhoneSimulator();
+			const libraryPath = require("./iphone-simulator");
+			const obj = new libraryPath.iPhoneSimulator();
 			return obj.run.apply(obj, args);
 		}
 	}
@@ -88,8 +88,8 @@ Object.defineProperty(publicApi, "launchApplication", {
 Object.defineProperty(publicApi, "printDeviceTypes", {
 	get: () => {
 		return (...args: any[]) => {
-			let libraryPath = require("./iphone-simulator");
-			let obj = new libraryPath.iPhoneSimulator();
+			const libraryPath = require("./iphone-simulator");
+			const obj = new libraryPath.iPhoneSimulator();
 			return obj.printDeviceTypes.apply(obj, args);
 		}
 	}
