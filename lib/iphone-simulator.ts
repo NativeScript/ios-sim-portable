@@ -18,13 +18,13 @@ export class iPhoneSimulator implements IiPhoneSimulator {
 		this.simulator = this.createSimulator();
 	}
 
-	public run(applicationPath: string, applicationIdentifier: string, options: IOptions): string {
+	public async run(applicationPath: string, applicationIdentifier: string, options: IOptions): Promise<string> {
 		if (!fs.existsSync(applicationPath)) {
 			errors.fail("Path does not exist ", applicationPath);
 		}
 
 		if (options.device) {
-			const hasSuchDevice = _.find(this.simulator.getDevices(), device => device.name === options.device || device.id === options.device);
+			const hasSuchDevice = _.find(await this.simulator.getDevices(), device => device.name === options.device || device.id === options.device);
 			if (!hasSuchDevice) {
 				errors.fail(`Unable to find device ${options.device}.`);
 			}
@@ -32,7 +32,7 @@ export class iPhoneSimulator implements IiPhoneSimulator {
 
 		let sdkVersion = options.sdkVersion || options.sdk;
 		if (sdkVersion) {
-			let runtimeVersions = _.unique(_.map(this.simulator.getDevices(), (device: IDevice) => device.runtimeVersion));
+			let runtimeVersions = _.unique(_.map(await this.simulator.getDevices(), (device: IDevice) => device.runtimeVersion));
 			if (!_.contains(runtimeVersions, sdkVersion)) {
 				errors.fail(`Unable to find sdk ${sdkVersion}. The valid runtime versions are ${runtimeVersions.join(", ")}`);
 			}
@@ -41,13 +41,13 @@ export class iPhoneSimulator implements IiPhoneSimulator {
 		return this.simulator.run(applicationPath, applicationIdentifier, options);
 	}
 
-	public printDeviceTypes(): void {
-		let devices = this.simulator.getDevices();
+	public async printDeviceTypes(): Promise<void> {
+		let devices = await this.simulator.getDevices();
 		_.each(devices, device => console.log(`Device Identifier: ${device.fullId}. ${os.EOL}Runtime version: ${device.runtimeVersion} ${os.EOL}`));
 	}
 
-	public printSDKS(): void {
-		let sdks = this.simulator.getSdks();
+	public async printSDKS(): Promise<void> {
+		let sdks = await this.simulator.getSdks();
 		_.each(sdks, (sdk) => {
 			let output = `    Display Name: ${sdk.displayName} ${os.EOL}    Version: ${sdk.version} ${os.EOL}`;
 			if (sdk.rootPath) {
@@ -57,7 +57,7 @@ export class iPhoneSimulator implements IiPhoneSimulator {
 		});
 	}
 
-	public sendNotification(notification: string, deviceId: string): void {
+	public sendNotification(notification: string, deviceId: string): Promise<void> {
 		if (!notification) {
 			errors.fail("Notification required.");
 		}

@@ -52,13 +52,13 @@ Object.defineProperty(publicApi, "getRunningSimulators", {
 		return (...args: any[]) => {
 			let isResolved = false;
 
-			return new Promise<any>((resolve, reject) => {
+			return new Promise<any>(async (resolve, reject) => {
 				const libraryPath = require("./iphone-simulator-xcode-simctl");
 				const simulator = new libraryPath.XCodeSimctlSimulator();
-
-				const tryGetBootedDevices = () => {
+				
+				const tryGetBootedDevices = async () => {
 					try {
-						return simulator.getBootedDevices.apply(simulator, args);
+						return await simulator.getBootedDevices.apply(simulator, args);
 					} catch (err) {
 						if (!isResolved) {
 							isResolved = true;
@@ -67,7 +67,7 @@ Object.defineProperty(publicApi, "getRunningSimulators", {
 					}
 				}
 
-				let result = tryGetBootedDevices();
+				let result = await tryGetBootedDevices();
 				if (result && result.length) {
 					isResolved = true;
 					resolve(result);
@@ -75,9 +75,8 @@ Object.defineProperty(publicApi, "getRunningSimulators", {
 				}
 
 				if (!isResolved && (!result || !result.length)) {
-					const timer = setTimeout(() => {
-						result = tryGetBootedDevices();
-
+					const timer = setTimeout(async () => {
+						result = await tryGetBootedDevices();
 						if (!isResolved) {
 							isResolved = true;
 							resolve(result);

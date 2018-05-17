@@ -5,7 +5,7 @@ import * as _ from "lodash";
 
 export class Simctl implements ISimctl {
 
-	public launch(deviceId: string, appIdentifier: string, options: IOptions): string {
+	public async launch(deviceId: string, appIdentifier: string, options: IOptions): Promise<string> {
 		options = options || {};
 		let args: string[] = [];
 		if (options.waitForDebugger) {
@@ -19,7 +19,7 @@ export class Simctl implements ISimctl {
 			_.each(applicationArgs, (arg: string) => args.push(arg));
 		}
 
-		let result = this.simctlExec("launch", args);
+		let result = await this.spawnAsync("launch", args);
 
 		if (options.waitForDebugger) {
 			console.log(`${appIdentifier}: ${result}`);
@@ -28,29 +28,29 @@ export class Simctl implements ISimctl {
 		return result;
 	}
 
-	public boot(deviceId: string) {
-		return this.simctlExec("boot", [deviceId]);
+	public boot(deviceId: string): Promise<void> {
+		return this.spawnAsync("boot", [deviceId]);
 	}
 
-	public terminate(deviceId: string, appIdentifier: string): string {
-		return this.simctlExec("terminate", [deviceId, appIdentifier]);
+	public terminate(deviceId: string, appIdentifier: string):  Promise<string> {
+		return this.spawnAsync("terminate", [deviceId, appIdentifier]);
 	}
 
-	public install(deviceId: string, applicationPath: string): void {
-		this.simctlExec("install", [deviceId, applicationPath]);
+	public install(deviceId: string, applicationPath: string):  Promise<void> {
+		return this.spawnAsync("install", [deviceId, applicationPath]);
 	}
 
-	public uninstall(deviceId: string, appIdentifier: string, opts?: any): void {
-		this.simctlExec("uninstall", [deviceId, appIdentifier], opts);
+	public uninstall(deviceId: string, appIdentifier: string, opts?: any):  Promise<void> {
+		return this.spawnAsync("uninstall", [deviceId, appIdentifier], opts);
 	}
 
-	public notifyPost(deviceId: string, notification: string): void {
-		this.simctlExec("notify_post", [deviceId, notification]);
+	public notifyPost(deviceId: string, notification: string): Promise<void> {
+		return this.spawnAsync("notify_post", [deviceId, notification]);
 	}
 
-	public getAppContainer(deviceId: string, appIdentifier: string): string {
+	public async getAppContainer(deviceId: string, appIdentifier: string): Promise<string> {
 		try {
-			return this.simctlExec("get_app_container", [deviceId, appIdentifier]);
+			return await this.spawnAsync("get_app_container", [deviceId, appIdentifier]);
 		} catch (e) {
 			if (e.message.indexOf("No such file or directory") > -1) {
 				return null;
@@ -59,8 +59,8 @@ export class Simctl implements ISimctl {
 		}
 	}
 
-	public getDevices(): IDevice[] {
-		let rawDevices = this.simctlExec("list", ["devices"]);
+	public async getDevices(): Promise<IDevice[]> {
+		let rawDevices = await this.spawnAsync("list", ["devices"]);
 
 		// expect to get a listing like
 		// -- iOS 8.1 --
@@ -157,5 +157,9 @@ export class Simctl implements ISimctl {
 
 	private simctlSpawn(command: string, args: string[], opts?: child_process.SpawnOptions): child_process.ChildProcess {
 		return child_process.spawn("xcrun", ["simctl", command].concat(args), opts);
+	}
+
+	private spawnAsync(command: string, args: string[], opts?: child_process.SpawnOptions): Promise<any> {
+		return childProcess.spawn("xcrun", ["simctl", command].concat(args), opts);
 	}
 }

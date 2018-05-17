@@ -30,12 +30,12 @@ export class XCodeSimctlSimulator extends IPhoneSimulatorNameGetter implements I
 		this.simctl = new Simctl();
 	}
 
-	public getDevices(): IDevice[] {
+	public getDevices(): Promise<IDevice[]> {
 		return this.simctl.getDevices();
 	}
 
-	public getSdks(): ISdk[] {
-		let devices = this.simctl.getDevices();
+	public async getSdks(): Promise<ISdk[]> {
+		let devices = await this.simctl.getDevices();
 		return _.map(devices, device => {
 			return {
 				displayName: `iOS ${device.runtimeVersion}`,
@@ -44,8 +44,8 @@ export class XCodeSimctlSimulator extends IPhoneSimulatorNameGetter implements I
 		});
 	}
 
-	public run(applicationPath: string, applicationIdentifier: string, options: IOptions): string {
-		const device = this.getDeviceToRun(options);
+	public async run(applicationPath: string, applicationIdentifier: string, options: IOptions): Promise<string> {
+		const device = await this.getDeviceToRun(options);
 
 		this.startSimulator(options, device);
 		if (!options.skipInstall) {
@@ -55,16 +55,17 @@ export class XCodeSimctlSimulator extends IPhoneSimulatorNameGetter implements I
 		return this.simctl.launch(device.id, applicationIdentifier, options);
 	}
 
-	public sendNotification(notification: string, deviceId: string): void {
+	public sendNotification(notification: string, deviceId: string): Promise<void> {
 		let device = this.getDeviceFromIdentifier(deviceId);
+
 		if (!device) {
 			errors.fail("Could not find device.");
 		}
 
-		this.simctl.notifyPost(deviceId, notification);
+		return this.simctl.notifyPost(deviceId, notification);
 	}
 
-	public getApplicationPath(deviceId: string, applicationIdentifier: string): string {
+	public getApplicationPath(deviceId: string, applicationIdentifier: string): Promise<string> {
 		return this.simctl.getAppContainer(deviceId, applicationIdentifier);
 	}
 
@@ -72,23 +73,23 @@ export class XCodeSimctlSimulator extends IPhoneSimulatorNameGetter implements I
 		return common.getInstalledApplications(deviceId);
 	}
 
-	public installApplication(deviceId: string, applicationPath: string): void {
+	public installApplication(deviceId: string, applicationPath: string): Promise<void> {
 		return this.simctl.install(deviceId, applicationPath);
 	}
 
-	public uninstallApplication(deviceId: string, appIdentifier: string): void {
+	public uninstallApplication(deviceId: string, appIdentifier: string):  Promise<void> {
 		return this.simctl.uninstall(deviceId, appIdentifier, { skipError: true });
 	}
 
-	public startApplication(deviceId: string, appIdentifier: string, options: IOptions): string {
+	public async startApplication(deviceId: string, appIdentifier: string, options: IOptions): Promise<string> {
 		// simctl launch command does not launch the process immediately and we have to wait a little bit,
 		// just to ensure all related processes and services are alive.
-		const launchResult = this.simctl.launch(deviceId, appIdentifier, options);
+		const launchResult = await this.simctl.launch(deviceId, appIdentifier, options);
 		utils.sleep(0.5);
 		return launchResult;
 	}
 
-	public stopApplication(deviceId: string, appIdentifier: string, bundleExecutable: string): string {
+	public async stopApplication(deviceId: string, appIdentifier: string, bundleExecutable: string): Promise<string> {
 		try {
 			let xcodeMajorVersion: number = null;
 			try {
@@ -103,7 +104,7 @@ export class XCodeSimctlSimulator extends IPhoneSimulatorNameGetter implements I
 				// Xcode 7.x does not have support for `xcrun simctl terminate` command
 				resultOfTermination = childProcess.execSync(`killall ${bundleExecutable}`, { skipError: true });
 			} else {
-				resultOfTermination = this.simctl.terminate(deviceId, appIdentifier);
+				resultOfTermination = await this.simctl.terminate(deviceId, appIdentifier);
 			}
 
 			// killall command does not terminate the processes immediately and we have to wait a little bit,
@@ -116,9 +117,9 @@ export class XCodeSimctlSimulator extends IPhoneSimulatorNameGetter implements I
 		}
 	}
 
-	public getDeviceLogProcess(deviceId: string, predicate?: string): child_process.ChildProcess {
+	public async getDeviceLogProcess(deviceId: string, predicate?: string): Promise<child_process.ChildProcess> {
 		if (!this.isDeviceLogOperationStarted) {
-			const device = this.getDeviceFromIdentifier(deviceId);
+			const device = await this.getDeviceFromIdentifier(deviceId);
 			const deviceVersion = device ? device.runtimeVersion : "";
 			const majorVersion = deviceVersion.split(".")[0];
 
@@ -135,8 +136,8 @@ export class XCodeSimctlSimulator extends IPhoneSimulatorNameGetter implements I
 		return this.deviceLogChildProcess;
 	}
 
-	private getDeviceToRun(options: IOptions, device?: any): IDevice {
-		let devices = _.sortBy(this.simctl.getDevices(), (device) => device.runtimeVersion),
+	private async getDeviceToRun(options: IOptions, device?: any): Promise<IDevice> {
+		let devices = _.sortBy(await this.simctl.getDevices(), (device) => device.runtimeVersion),
 			sdkVersion = options.sdkVersion || options.sdk,
 			deviceIdOrName = options.device;
 
@@ -181,22 +182,22 @@ export class XCodeSimctlSimulator extends IPhoneSimulatorNameGetter implements I
 		return device.state === 'Booted';
 	}
 
-	private getBootedDevice(): IDevice {
-		let devices = this.simctl.getDevices();
+	private async getBootedDevice(): Promise<IDevice> {
+		let devices = await this.simctl.getDevices();
 		return _.find(devices, device => this.isDeviceBooted(device));
 	}
 
-	private getBootedDevices(): IDevice[] {
-		const devices = this.simctl.getDevices();
+	private async getBootedDevices(): Promise<IDevice[]> {
+		const devices = await this.simctl.getDevices();
 		return _.filter(devices, device => this.isDeviceBooted(device));
 	}
 
-	public startSimulator(options: IOptions, device?: IDevice): void {
+	public async startSimulator(options: IOptions, device?: IDevice): Promise<void> {
 		if (!device && options.device) {
 			this.verifyDevice(options.device);
 		}
 		
-		device = device || this.getDeviceToRun(options);
+		device = device || await this.getDeviceToRun(options);
 
 		// In case the id is undefined, skip verification - we'll start default simulator.
 		if (device && device.id) {
@@ -204,7 +205,7 @@ export class XCodeSimctlSimulator extends IPhoneSimulatorNameGetter implements I
 		}
 
 		if (!device || !device.runtimeVersion || !device.fullId) {
-			device = this.getDeviceToRun(options, device);
+			device = await this.getDeviceToRun(options, device);
 		}
 
 		if (!this.isDeviceBooted(device)) {
@@ -214,7 +215,7 @@ export class XCodeSimctlSimulator extends IPhoneSimulatorNameGetter implements I
 			if (isSimulatorAppRunning) {
 				// In case user closes simulator window but simulator app is still alive
 				if (!haveBootedDevices) {
-					device = this.getDeviceToRun(options);
+					device = await this.getDeviceToRun(options);
 				}
 				this.simctl.boot(device.id);
 			} else {
@@ -229,8 +230,8 @@ export class XCodeSimctlSimulator extends IPhoneSimulatorNameGetter implements I
 		}
 	}
 
-	private haveBootedDevices(): boolean {
-		const bootedDevices = this.getBootedDevices();
+	private async haveBootedDevices(): Promise<boolean> {
+		const bootedDevices = await this.getBootedDevices();
 		return bootedDevices && bootedDevices.length > 0;
 	}
 
@@ -245,16 +246,16 @@ export class XCodeSimctlSimulator extends IPhoneSimulatorNameGetter implements I
 		}
 	}
 
-	private verifyDevice(device: IDevice | string): void {
-		const availableDevices = this.getDevices();
+	private async verifyDevice(device: IDevice | string): Promise<void> {
+		const availableDevices = await this.getDevices();
 		const deviceId = (<IDevice>device).id || device;
 		if (!_.find(availableDevices, { id: deviceId }) && !_.find(availableDevices, { name: deviceId })) {
 			errors.fail(`No simulator image available for device identifier '${deviceId}'.`);
 		}
 	}
 
-	private getDeviceFromIdentifier(deviceId: string) {
-		const availableDevices = this.getDevices();
+	private async getDeviceFromIdentifier(deviceId: string) {
+		const availableDevices = await this.getDevices();
 
 		return _.find(availableDevices, { id: deviceId });
 	}
