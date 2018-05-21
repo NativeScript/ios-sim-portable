@@ -2,10 +2,10 @@
 "use strict";
 
 interface IiPhoneSimulator {
-	run(applicationPath: string, applicationIdentifier: string): void;
+	run(applicationPath: string, applicationIdentifier: string, options: IOptions): string;
 	printDeviceTypes(): void;
 	printSDKS(): void;
-	sendNotification(notification: string): void;
+	sendNotification(notification: string, deviceId: string): void;
 	createSimulator(): ISimulator;
 }
 
@@ -27,7 +27,7 @@ interface IDevice {
 }
 
 interface ISimctl {
-	launch(deviceId: string, applicationIdentifier: string): string;
+	launch(deviceId: string, applicationIdentifier: string, options: IOptions): string;
 	boot(deviceId: string): void;
 	terminate(deviceId: string, appIdentifier: string): string;
 	install(deviceId: string, applicationPath: string): void;
@@ -45,17 +45,16 @@ interface IDictionary<T> {
 interface ISimulator extends INameGetter {
 	getDevices(): IDevice[];
 	getSdks(): ISdk[];
-	run(applicationPath: string, applicationIdentifier: string): void;
-	sendNotification(notification: string): void;
+	run(applicationPath: string, applicationIdentifier: string, options: IOptions): string;
+	sendNotification(notification: string, deviceId: string): void;
 	getApplicationPath(deviceId: string, applicationIdentifier: string): string;
 	getInstalledApplications(deviceId: string): IApplication[];
 	installApplication(deviceId: string, applicationPath: string): void;
 	uninstallApplication(deviceId: string, appIdentifier: string): void;
-	startApplication(deviceId: string, appIdentifier: string): string;
+	startApplication(deviceId: string, appIdentifier: string, options: IOptions): string;
 	stopApplication(deviceId: string, appIdentifier: string, bundleExecutable: string): string;
-	printDeviceLog(deviceId: string, launchResult?: string): any;
 	getDeviceLogProcess(deviceId: string): any;
-	startSimulator(): void;
+	startSimulator(options: IOptions, device?: IDevice): void;
 }
 
 interface INameGetter {
@@ -84,4 +83,13 @@ interface IXcodeVersionData {
 	major: string;
 	minor: string;
 	build: string;
+}
+
+interface IOptions {
+	skipInstall?: boolean;
+	waitForDebugger?: boolean;
+	args?: any;
+	sdkVersion?: string;
+	sdk?: string;
+	device?: string;
 }

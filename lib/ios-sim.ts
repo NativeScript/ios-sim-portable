@@ -107,15 +107,36 @@ Object.defineProperty(publicApi, "getInstalledApplications", {
 	}
 });
 
+Object.defineProperty(publicApi, "launchApplication", {
+	get: () => {
+		return (...args: any[]) => {
+			const libraryPath = require("./iphone-simulator");
+			const obj = new libraryPath.iPhoneSimulator();
+			return obj.run.apply(obj, args);
+		}
+	}
+});
+
+Object.defineProperty(publicApi, "printDeviceTypes", {
+	get: () => {
+		return (...args: any[]) => {
+			const libraryPath = require("./iphone-simulator");
+			const obj = new libraryPath.iPhoneSimulator();
+			return obj.printDeviceTypes.apply(obj, args);
+		}
+	}
+});
+
 ["installApplication",
 	"uninstallApplication",
 	"startApplication",
 	"stopApplication",
-	"printDeviceLog",
+	"run",
 	"getDeviceLogProcess",
 	"startSimulator",
 	"getSimulatorName",
-	"getDevices"].forEach(methodName => {
+	"getDevices",
+	"sendNotification"].forEach(methodName => {
 		Object.defineProperty(publicApi, methodName, {
 			get: () => {
 				return (...args: any[]) => {

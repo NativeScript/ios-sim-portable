@@ -1,12 +1,12 @@
 import childProcess = require("./child-process");
 import * as child_process from "child_process";
 import errors = require("./errors");
-import options = require("./options");
 import * as _ from "lodash";
 
 export class Simctl implements ISimctl {
 
-	public launch(deviceId: string, appIdentifier: string): string {
+	public launch(deviceId: string, appIdentifier: string, options: IOptions): string {
+		options = options || {};
 		let args: string[] = [];
 		if (options.waitForDebugger) {
 			args.push("-w");
