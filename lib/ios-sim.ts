@@ -68,12 +68,17 @@ Object.defineProperty(publicApi, "getRunningSimulators", {
 				}
 
 				let result = tryGetBootedDevices();
+				if (result && result.length) {
+					isResolved = true;
+					resolve(result);
+					return;
+				}
 
-				if (!isResolved && !result) {
+				if (!isResolved && (!result || !result.length)) {
 					let repeatCount = 30;
 					const timer = setInterval(() => {
 						result = tryGetBootedDevices();
-						if ((result || !repeatCount) && !isResolved) {
+						if (((result && result.length) || !repeatCount) && !isResolved) {
 							isResolved = true;
 							clearInterval(timer);
 							resolve(result);
