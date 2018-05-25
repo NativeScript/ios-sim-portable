@@ -24,9 +24,9 @@ export class iPhoneSimulator implements IiPhoneSimulator {
 		}
 
 		if (options.device) {
-			let deviceNames = _.unique(_.map(this.simulator.getDevices(), (device: IDevice) => device.name));
-			if (!_.contains(deviceNames, options.device)) {
-				errors.fail(`Unable to find device ${options.device}. The valid device names are ${deviceNames.join(", ")}`);
+			const hasSuchDevice = _.find(this.simulator.getDevices(), device => device.name === options.device || device.id === options.device);
+			if (!hasSuchDevice) {
+				errors.fail(`Unable to find device ${options.device}.`);
 			}
 		}
 
