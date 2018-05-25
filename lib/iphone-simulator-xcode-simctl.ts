@@ -45,11 +45,7 @@ export class XCodeSimctlSimulator extends IPhoneSimulatorNameGetter implements I
 	}
 
 	public run(applicationPath: string, applicationIdentifier: string, options: IOptions): string {
-		let device = this.getDeviceToRun(options);
-		let currentBootedDevice = _.find(this.getDevices(), device => this.isDeviceBooted(device));
-		if (currentBootedDevice && (currentBootedDevice.name.toLowerCase() !== device.name.toLowerCase() || currentBootedDevice.runtimeVersion !== device.runtimeVersion)) {
-			this.killSimulator();
-		}
+		const device = this.getDeviceToRun(options);
 
 		this.startSimulator(options, device);
 		if (!options.skipInstall) {
@@ -210,7 +206,7 @@ export class XCodeSimctlSimulator extends IPhoneSimulatorNameGetter implements I
 		if (!this.isDeviceBooted(device)) {
 			const isSimulatorAppRunning = this.isSimulatorAppRunning();
 			const haveBootedDevices = this.haveBootedDevices();
-				
+
 			if (isSimulatorAppRunning) {
 				// In case user closes simulator window but simulator app is still alive
 				if (!haveBootedDevices) {
