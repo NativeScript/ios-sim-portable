@@ -245,10 +245,11 @@ export class XCodeSimctlSimulator extends IPhoneSimulatorNameGetter implements I
 		}
 	}
 
-	private verifyDevice(device: IDevice): void {
+	private verifyDevice(device: IDevice | string): void {
 		const availableDevices = this.getDevices();
-		if (!_.find(availableDevices, { id: device.id }) && !_.find(availableDevices, { name: device.id })) {
-			errors.fail(`No simulator image available for device identifier '${device.id}'.`);
+		const deviceId = (<IDevice>device).id || device;
+		if (!_.find(availableDevices, { id: deviceId }) && !_.find(availableDevices, { name: deviceId })) {
+			errors.fail(`No simulator image available for device identifier '${deviceId}'.`);
 		}
 	}
 
