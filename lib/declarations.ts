@@ -2,10 +2,10 @@
 "use strict";
 
 interface IiPhoneSimulator {
-	run(applicationPath: string, applicationIdentifier: string, options: IOptions): string;
-	printDeviceTypes(): void;
-	printSDKS(): void;
-	sendNotification(notification: string, deviceId: string): void;
+	run(applicationPath: string, applicationIdentifier: string, options: IOptions): Promise<string>;
+	printDeviceTypes(): Promise<void>;
+	printSDKS(): Promise<void>;
+	sendNotification(notification: string, deviceId: string): Promise<void>;
 	createSimulator(): ISimulator;
 }
 
@@ -27,15 +27,15 @@ interface IDevice {
 }
 
 interface ISimctl {
-	launch(deviceId: string, applicationIdentifier: string, options: IOptions): string;
-	boot(deviceId: string): void;
-	terminate(deviceId: string, appIdentifier: string): string;
-	install(deviceId: string, applicationPath: string): void;
-	uninstall(deviceId: string, applicationIdentifier: string, opts?: any): void;
-	notifyPost(deviceId: string, notification: string): void;
-	getDevices(): IDevice[];
+	launch(deviceId: string, applicationIdentifier: string, options: IOptions): Promise<string>;
+	boot(deviceId: string): Promise<void>;
+	terminate(deviceId: string, appIdentifier: string): Promise<string>;
+	install(deviceId: string, applicationPath: string): Promise<void>;
+	uninstall(deviceId: string, applicationIdentifier: string, opts?: any): Promise<void>;
+	notifyPost(deviceId: string, notification: string): Promise<void>;
+	getDevices(): Promise<IDevice[]>;
 	getLog(deviceId: string, predicate?: string): any;
-	getAppContainer(deviceId: string, applicationIdentifier: string): string;
+	getAppContainer(deviceId: string, applicationIdentifier: string): Promise<string>;
 }
 
 interface IDictionary<T> {
@@ -43,18 +43,18 @@ interface IDictionary<T> {
 }
 
 interface ISimulator extends INameGetter {
-	getDevices(): IDevice[];
-	getSdks(): ISdk[];
-	run(applicationPath: string, applicationIdentifier: string, options: IOptions): string;
-	sendNotification(notification: string, deviceId: string): void;
-	getApplicationPath(deviceId: string, applicationIdentifier: string): string;
+	getDevices(): Promise<IDevice[]>;
+	getSdks(): Promise<ISdk[]>;
+	run(applicationPath: string, applicationIdentifier: string, options: IOptions): Promise<string>;
+	sendNotification(notification: string, deviceId: string): Promise<void>;
+	getApplicationPath(deviceId: string, applicationIdentifier: string): Promise<string>;
 	getInstalledApplications(deviceId: string): IApplication[];
-	installApplication(deviceId: string, applicationPath: string): void;
-	uninstallApplication(deviceId: string, appIdentifier: string): void;
-	startApplication(deviceId: string, appIdentifier: string, options: IOptions): string;
-	stopApplication(deviceId: string, appIdentifier: string, bundleExecutable: string): string;
-	getDeviceLogProcess(deviceId: string): any;
-	startSimulator(options: IOptions, device?: IDevice): void;
+	installApplication(deviceId: string, applicationPath: string): Promise<void>;
+	uninstallApplication(deviceId: string, appIdentifier: string): Promise<void>;
+	startApplication(deviceId: string, appIdentifier: string, options: IOptions): Promise<string>;
+	stopApplication(deviceId: string, appIdentifier: string, bundleExecutable: string): Promise<string>;
+	getDeviceLogProcess(deviceId: string): Promise<any>;
+	startSimulator(options: IOptions, device?: IDevice): Promise<void>;
 }
 
 interface INameGetter {
