@@ -194,14 +194,14 @@ export class XCodeSimctlSimulator extends IPhoneSimulatorNameGetter implements I
 
 	public async startSimulator(options: IOptions, device?: IDevice): Promise<void> {
 		if (!device && options.device) {
-			this.verifyDevice(options.device);
+			await this.verifyDevice(options.device);
 		}
 		
 		device = device || await this.getDeviceToRun(options);
 
 		// In case the id is undefined, skip verification - we'll start default simulator.
 		if (device && device.id) {
-			this.verifyDevice(device);
+			await this.verifyDevice(device);
 		}
 
 		if (!device || !device.runtimeVersion || !device.fullId) {
