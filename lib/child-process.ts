@@ -55,5 +55,9 @@ export function spawn(command: string, args: string[], opts?: any): Promise<stri
 				}
 			}
 		});
+
+		childProcess.on("error", (err) => {
+			reject(err);
+		});
 	});
 }
