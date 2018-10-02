@@ -49,7 +49,7 @@ export class XCodeSimctlSimulator extends IPhoneSimulatorNameGetter implements I
 
 		this.startSimulator(options, device);
 		if (!options.skipInstall) {
-			this.simctl.install(device.id, applicationPath);
+			await this.installApplication(device.id, applicationPath);
 		}
 
 		return this.simctl.launch(device.id, applicationIdentifier, options);
@@ -73,8 +73,12 @@ export class XCodeSimctlSimulator extends IPhoneSimulatorNameGetter implements I
 		return common.getInstalledApplications(deviceId);
 	}
 
-	public installApplication(deviceId: string, applicationPath: string): Promise<void> {
-		return this.simctl.install(deviceId, applicationPath);
+	public async installApplication(deviceId: string, applicationPath: string): Promise<void> {
+		try {
+			await this.simctl.install(deviceId, applicationPath);
+		} catch (err) {
+			await this.simctl.install(deviceId, applicationPath);
+		}
 	}
 
 	public uninstallApplication(deviceId: string, appIdentifier: string):  Promise<void> {
@@ -196,7 +200,7 @@ export class XCodeSimctlSimulator extends IPhoneSimulatorNameGetter implements I
 		if (!device && options.device) {
 			await this.verifyDevice(options.device);
 		}
-		
+
 		device = device || await this.getDeviceToRun(options);
 
 		// In case the id is undefined, skip verification - we'll start default simulator.
@@ -258,9 +262,5 @@ export class XCodeSimctlSimulator extends IPhoneSimulatorNameGetter implements I
 		const availableDevices = await this.getDevices();
 
 		return _.find(availableDevices, { id: deviceId });
-	}
-
-	private killSimulator(): void {
-		childProcess.execSync("pkill -9 -f Simulator");
 	}
 }
