@@ -81,7 +81,7 @@ export class XCodeSimctlSimulator extends IPhoneSimulatorNameGetter implements I
 		}
 	}
 
-	public uninstallApplication(deviceId: string, appIdentifier: string):  Promise<void> {
+	public uninstallApplication(deviceId: string, appIdentifier: string): Promise<void> {
 		return this.simctl.uninstall(deviceId, appIdentifier, { skipError: true });
 	}
 
@@ -122,22 +122,63 @@ export class XCodeSimctlSimulator extends IPhoneSimulatorNameGetter implements I
 	}
 
 	public async getDeviceLogProcess(deviceId: string, predicate?: string): Promise<child_process.ChildProcess> {
-		if (!this.isDeviceLogOperationStarted) {
-			const device = await this.getDeviceFromIdentifier(deviceId);
-			const deviceVersion = device ? device.runtimeVersion : "";
-			const majorVersion = deviceVersion.split(".")[0];
+		const device = await this.getDeviceFromIdentifier(deviceId);
+		return new Promise<child_process.ChildProcess>((resolve, reject) => {
+			let timer: NodeJS.Timer;
+			let isFulfilled = false;
 
-			if (majorVersion && parseInt(majorVersion) >= 11) {
-				this.deviceLogChildProcess = this.simctl.getLog(deviceId, predicate);
+			const fulfillSafe = (data?: Error | string) => {
+				if (!isFulfilled) {
+					isFulfilled = true;
+					if (data instanceof Error) {
+						reject(data);
+					} else {
+						resolve(this.deviceLogChildProcess);
+					}
+				}
+
+				if (timer) {
+					clearTimeout(timer);
+					timer = null;
+				}
+
+				if (this.deviceLogChildProcess) {
+					if (this.deviceLogChildProcess.stdout) {
+						this.deviceLogChildProcess.stdout.removeListener("data", fulfillSafe);
+					}
+
+					this.deviceLogChildProcess.removeListener("error", fulfillSafe);
+				}
+			};
+
+			if (!this.isDeviceLogOperationStarted) {
+				const deviceVersion = device ? device.runtimeVersion : "";
+				const majorVersion = deviceVersion.split(".")[0];
+
+				if (majorVersion && parseInt(majorVersion) >= 11) {
+					timer = setTimeout(() => {
+						fulfillSafe();
+					}, 3000);
+
+					// For some reason starting the process takes a lot of time. So wait for the first message on stdout and resolve the promise at this point.
+					this.deviceLogChildProcess = this.simctl.getLog(deviceId, predicate);
+					if (this.deviceLogChildProcess.stdout) {
+						this.deviceLogChildProcess.stdout.once("data", fulfillSafe);
+						this.deviceLogChildProcess.once("error", fulfillSafe);
+					} else {
+						fulfillSafe();
+					}
+				} else {
+					const logFilePath = path.join(osenv.home(), "Library", "Logs", "CoreSimulator", deviceId, "system.log");
+					this.deviceLogChildProcess = childProcess.spawn("tail", ['-f', '-n', '1', logFilePath]);
+					fulfillSafe();
+				}
+
+				this.isDeviceLogOperationStarted = true;
 			} else {
-				const logFilePath = path.join(osenv.home(), "Library", "Logs", "CoreSimulator", deviceId, "system.log");
-				this.deviceLogChildProcess = require("child_process").spawn("tail", ['-f', '-n', '1', logFilePath]);
+				fulfillSafe();
 			}
-
-			this.isDeviceLogOperationStarted = true;
-		}
-
-		return this.deviceLogChildProcess;
+		});
 	}
 
 	private async getDeviceToRun(options: IOptions, device?: any): Promise<IDevice> {
