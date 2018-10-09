@@ -170,7 +170,7 @@ export class XCodeSimctlSimulator extends IPhoneSimulatorNameGetter implements I
 					}
 				} else {
 					const logFilePath = path.join(osenv.home(), "Library", "Logs", "CoreSimulator", deviceId, "system.log");
-					this.deviceLogChildProcess = childProcess.spawn("tail", ['-f', '-n', '1', logFilePath]);
+					this.deviceLogChildProcess = child_process.spawn("tail", ['-f', '-n', '1', logFilePath]);
 					fulfillSafe();
 				}
 
