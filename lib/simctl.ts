@@ -2,6 +2,7 @@ import childProcess = require("./child-process");
 import * as child_process from "child_process";
 import errors = require("./errors");
 import * as _ from "lodash";
+import * as fs from "fs";
 
 export class Simctl implements ISimctl {
 
@@ -50,7 +51,9 @@ export class Simctl implements ISimctl {
 
 	public async getAppContainer(deviceId: string, appIdentifier: string): Promise<string> {
 		try {
-			return await this.spawnAsync("get_app_container", [deviceId, appIdentifier]);
+			const appContainerPath = await this.spawnAsync("get_app_container", [deviceId, appIdentifier]);
+			// In case application is not installed on simulator, get_app_container returns some random location. After you installation, the application goes in a different location.
+			return fs.existsSync(appContainerPath) ? appContainerPath : null;
 		} catch (e) {
 			if (e.message.indexOf("No such file or directory") > -1) {
 				return null;
