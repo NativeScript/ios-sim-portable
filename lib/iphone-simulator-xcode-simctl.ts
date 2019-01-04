@@ -93,32 +93,22 @@ export class XCodeSimctlSimulator extends IPhoneSimulatorNameGetter implements I
 		return launchResult;
 	}
 
-	public async stopApplication(deviceId: string, appIdentifier: string, bundleExecutable: string): Promise<string> {
+	public async stopApplication(deviceId: string, appIdentifier: string, bundleExecutable: string): Promise<void> {
 		try {
-			let xcodeMajorVersion: number = null;
-			try {
-				const xcodeVersion = xcode.getXcodeVersionData();
-				xcodeMajorVersion = +xcodeVersion.major;
-			} catch (err) {
-				// Ignore the error.
+			let pid = this.getPid(deviceId, bundleExecutable);
+			while (pid) {
+				childProcess.execSync(`kill -9 ${pid}`, { skipError: true });
+				pid = this.getPid(deviceId, bundleExecutable);
+				if (pid) {
+					utils.sleep(0.1);
+				}
 			}
-
-			let resultOfTermination: string;
-			if (xcodeMajorVersion && xcodeMajorVersion < 8) {
-				// Xcode 7.x does not have support for `xcrun simctl terminate` command
-				resultOfTermination = childProcess.execSync(`killall ${bundleExecutable}`, { skipError: true });
-			} else {
-				resultOfTermination = await this.simctl.terminate(deviceId, appIdentifier);
-			}
-
-			// killall command does not terminate the processes immediately and we have to wait a little bit,
-			// just to ensure all related processes and services are dead.
-			// Same is valid for simctl terminate when Simulator's OS version is below 10.
-			utils.sleep(0.5);
-
-			return resultOfTermination;
 		} catch (e) {
 		}
+	}
+
+	private getPid(deviceId: string, bundleExecutable: string): string {
+		return childProcess.execSync(`ps -ef | grep ${bundleExecutable} | grep ${deviceId} | grep -v grep | awk '{print $2}'`, { skipError: true }).toString().trim();
 	}
 
 	public async getDeviceLogProcess(deviceId: string, predicate?: string): Promise<child_process.ChildProcess> {

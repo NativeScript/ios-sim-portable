@@ -52,7 +52,7 @@ interface ISimulator extends INameGetter {
 	installApplication(deviceId: string, applicationPath: string): Promise<void>;
 	uninstallApplication(deviceId: string, appIdentifier: string): Promise<void>;
 	startApplication(deviceId: string, appIdentifier: string, options: IOptions): Promise<string>;
-	stopApplication(deviceId: string, appIdentifier: string, bundleExecutable: string): Promise<string>;
+	stopApplication(deviceId: string, appIdentifier: string, bundleExecutable: string): Promise<void>;
 	getDeviceLogProcess(deviceId: string): Promise<any>;
 	startSimulator(options: IOptions, device?: IDevice): Promise<void>;
 }
