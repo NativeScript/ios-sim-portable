@@ -108,8 +108,14 @@ export class XCodeSimctlSimulator extends IPhoneSimulatorNameGetter implements I
 	}
 
 	private getPid(deviceId: string, bundleExecutable: string): string {
-		return childProcess.execSync(`ps -ef | grep ${bundleExecutable} | grep ${deviceId} | grep -v grep | awk '{print $2}'`, { skipError: true }).toString().trim();
-	}
+		// Sample output of the command  ps -ef | grep app3grep | grep /86DCBE59-7ED0-447D-832B-A397322BD712/
+		// 1203284766 59345 51524   0  7:11pm ??         0:01.32 /Users/username/Library/Developer/CoreSimulator/Devices/86DCBE59-7ED0-447D-832B-A397322BD712/data/Containers/Bundle/Application/4E79A7E8-9AAB-40B9-89EF-C8D7B91B819E/app3grep.app/app3grep
+		// 1203284766 59486 59396   0  7:15pm ??         0:00.01 /bin/sh -c ps -ef | grep app3grep | grep /86DCBE59-7ED0-447D-832B-A397322BD712/
+		// The process, that is execed by Node.js is also returned, so we need to exclude it from the result.
+		// To achieve this, remove the command we've executed from the ps result.
+		const grepAppProcessCommand = `ps -ef | grep ${bundleExecutable} | grep \/${deviceId}\/`;
+		return childProcess.execSync(`${grepAppProcessCommand} | grep -v "${grepAppProcessCommand}" | awk '{print $2}'`, { skipError: true }).toString().trim();
+}
 
 	public async getDeviceLogProcess(deviceId: string, predicate?: string): Promise<child_process.ChildProcess> {
 		const device = await this.getDeviceFromIdentifier(deviceId);
