@@ -105,6 +105,9 @@ export class XCodeSimctlSimulator extends IPhoneSimulatorNameGetter implements I
 			}
 		} catch (e) {
 		}
+
+		await this.simctl.terminate(deviceId, appIdentifier);
+		utils.sleep(0.5);
 	}
 
 	private getPid(deviceId: string, bundleExecutable: string): string {
