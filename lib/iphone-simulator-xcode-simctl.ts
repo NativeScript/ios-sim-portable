@@ -97,7 +97,7 @@ export class XCodeSimctlSimulator extends IPhoneSimulatorNameGetter implements I
 		try {
 			let pid = this.getPid(deviceId, bundleExecutable);
 			while (pid) {
-				childProcess.execSync(`kill -9 ${pid}`, { skipError: true });
+				childProcess.execSync(`kill -9 ${pid}`, null, { skipError: true });
 				pid = this.getPid(deviceId, bundleExecutable);
 				if (pid) {
 					utils.sleep(0.1);
@@ -117,7 +117,7 @@ export class XCodeSimctlSimulator extends IPhoneSimulatorNameGetter implements I
 		// The process, that is execed by Node.js is also returned, so we need to exclude it from the result.
 		// To achieve this, remove the command we've executed from the ps result.
 		const grepAppProcessCommand = `ps -ef | grep ${bundleExecutable} | grep \/${deviceId}\/`;
-		return childProcess.execSync(`${grepAppProcessCommand} | grep -v "${grepAppProcessCommand}" | awk '{print $2}'`, { skipError: true }).toString().trim();
+		return childProcess.execSync(`${grepAppProcessCommand} | grep -v "${grepAppProcessCommand}" | awk '{print $2}'`, null, { skipError: true }).toString().trim();
 }
 
 	public async getDeviceLogProcess(deviceId: string, predicate?: string): Promise<child_process.ChildProcess> {

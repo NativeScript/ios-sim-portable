@@ -1,8 +1,8 @@
 import * as child_process from "child_process";
 
-export function execSync(command: string, opts?: any): any {
+export function execSync(command: string, execSyncOptions?: child_process.ExecSyncOptions, opts?: ISkipErrorComposition): any {
 	try {
-		return child_process.execSync(command, opts);
+		return child_process.execSync(command, execSyncOptions);
 	} catch (err) {
 		if (opts && opts.skipError) {
 			return err;
@@ -12,9 +12,9 @@ export function execSync(command: string, opts?: any): any {
 	}
 }
 
-export function spawnSync(command: string, args: string[], opts?: any): any {
+export function spawnSync(command: string, args: string[], spawnSyncOpts?: child_process.SpawnSyncOptions, opts?: ISkipErrorComposition): any {
 	try {
-		return child_process.spawnSync(command, args, opts);
+		return child_process.spawnSync(command, args, spawnSyncOpts);
 	} catch (err) {
 		if (opts && opts.skipError) {
 			return err;
@@ -24,12 +24,12 @@ export function spawnSync(command: string, args: string[], opts?: any): any {
 	}
 }
 
-export function spawn(command: string, args: string[], opts?: any): Promise<string> {
+export function spawn(command: string, args: string[], spawnOpts?: child_process.SpawnOptions, opts?: ISkipErrorComposition): Promise<string> {
 	return new Promise<string>((resolve, reject) => {
 		let capturedOut = "";
 		let capturedErr = "";
 
-		let childProcess = child_process.spawn(command, args);
+		let childProcess = child_process.spawn(command, args, spawnOpts);
 
 		if (childProcess.stdout) {
 			childProcess.stdout.on("data", (data: string) => {

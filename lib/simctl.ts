@@ -33,15 +33,15 @@ export class Simctl implements ISimctl {
 		return this.spawnAsync("boot", [deviceId]);
 	}
 
-	public terminate(deviceId: string, appIdentifier: string):  Promise<string> {
+	public terminate(deviceId: string, appIdentifier: string): Promise<string> {
 		return this.spawnAsync("terminate", [deviceId, appIdentifier]);
 	}
 
-	public install(deviceId: string, applicationPath: string):  Promise<void> {
+	public install(deviceId: string, applicationPath: string): Promise<void> {
 		return this.spawnAsync("install", [deviceId, applicationPath]);
 	}
 
-	public uninstall(deviceId: string, appIdentifier: string, opts?: any):  Promise<void> {
+	public uninstall(deviceId: string, appIdentifier: string, opts?: any): Promise<void> {
 		return this.spawnAsync("uninstall", [deviceId, appIdentifier], opts);
 	}
 
@@ -138,31 +138,37 @@ export class Simctl implements ISimctl {
 		return this.simctlSpawn("spawn", [deviceId, "log", "stream", "--style", "syslog"].concat(predicateArgs));
 	}
 
-	private simctlExec(command: string, args: string[], opts?: any): string {
-		const result = childProcess.spawnSync("xcrun", ["simctl", command].concat(args), opts);
-		if (result && result.stderr && !_.isEmpty(result.stderr)) {
-            		throw new Error(`Error while executing command '${["xcrun", "simctl", command].concat(args).join(" ")}'. Please ensure your tools are configured correctly. More info: ${result.stderr.toString()}`);
-        	}
-		if (result) {
-			if (result.signal) {
-				// In some cases, sending Ctrl + C (SIGINT) is handled by the simctl itself and spawnSync finishes, but the SIGINT does not stop current process.
-				// In order to ensure the same signal is sent to the caller (CLI for example), send the signal manually:
-				process.send(result.signal);
-			}
-
-			if (result.stdout) {
-				return result.stdout.toString().trim();
+	private async spawnAsync(command: string, args: string[], spawnOpts?: child_process.SpawnOptions, opts?: ISkipErrorComposition): Promise<any> {
+		const { canExecuteXcrun, xcodeToolsError } = this.verifyXcodeCommandLineToolsAreInstalled();
+		if (!canExecuteXcrun) {
+			if (opts.skipError) {
+				return null;
+			} else {
+				throw xcodeToolsError;
 			}
 		}
 
-		return '';
+		return childProcess.spawn("xcrun", ["simctl", command].concat(args), spawnOpts, opts);
 	}
 
-	private simctlSpawn(command: string, args: string[], opts?: child_process.SpawnOptions): child_process.ChildProcess {
-		return child_process.spawn("xcrun", ["simctl", command].concat(args), opts);
+	private verifyXcodeCommandLineToolsAreInstalled(): { canExecuteXcrun: boolean, xcodeToolsError: Error } {
+		let canExecuteXcrun = false;
+		let xcodeToolsError: Error = null;
+
+		try {
+			const result = childProcess.execSync("xcode-select -p", { stdio: "pipe" });
+			canExecuteXcrun = !!(result && result.toString().trim());
+			if (!canExecuteXcrun) {
+				xcodeToolsError = new Error("Unable to work with iOS Simulator as Xcode Command Line Tools cannot be found.");
+			}
+		} catch (err) {
+			xcodeToolsError = err
+		}
+
+		return { canExecuteXcrun, xcodeToolsError };
 	}
 
-	private spawnAsync(command: string, args: string[], opts?: child_process.SpawnOptions): Promise<any> {
-		return childProcess.spawn("xcrun", ["simctl", command].concat(args), opts);
+	private simctlSpawn(command: string, args: string[], spawnOpts?: child_process.SpawnOptions): child_process.ChildProcess {
+		return child_process.spawn("xcrun", ["simctl", command].concat(args), spawnOpts);
 	}
 }
