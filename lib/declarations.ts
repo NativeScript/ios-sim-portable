@@ -26,12 +26,16 @@ interface IDevice {
 	rawDevice?: any; // NodObjC wrapper to device
 }
 
+interface ISkipErrorComposition {
+	skipError: boolean;
+}
+
 interface ISimctl {
 	launch(deviceId: string, applicationIdentifier: string, options: IOptions): Promise<string>;
 	boot(deviceId: string): Promise<void>;
 	terminate(deviceId: string, appIdentifier: string): Promise<string>;
 	install(deviceId: string, applicationPath: string): Promise<void>;
-	uninstall(deviceId: string, applicationIdentifier: string, opts?: any): Promise<void>;
+	uninstall(deviceId: string, applicationIdentifier: string, opts?: ISkipErrorComposition): Promise<void>;
 	notifyPost(deviceId: string, notification: string): Promise<void>;
 	getDevices(): Promise<IDevice[]>;
 	getLog(deviceId: string, predicate?: string): any;
