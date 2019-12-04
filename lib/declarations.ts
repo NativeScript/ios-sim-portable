@@ -1,6 +1,21 @@
 ///<reference path="./.d.ts"/>
 "use strict";
 
+
+interface IDictionary<T> {
+	[key: string]: T
+}
+
+interface IDeferPromise<T> {
+	isRejected(): boolean;
+	isPending(): boolean;
+	getResult(): any;
+	promise: Promise<T>;
+	resolve(value?: T | PromiseLike<T>): void;
+	reject(reason?: any): void;
+	isResolved(): boolean;
+}
+
 interface IiPhoneSimulator {
 	run(applicationPath: string, applicationIdentifier: string, options: IOptions): Promise<string>;
 	printDeviceTypes(): Promise<void>;
@@ -40,10 +55,6 @@ interface ISimctl {
 	getDevices(): Promise<IDevice[]>;
 	getLog(deviceId: string, predicate?: string): any;
 	getAppContainer(deviceId: string, applicationIdentifier: string): Promise<string>;
-}
-
-interface IDictionary<T> {
-	[key: string]: T;
 }
 
 interface ISimulator extends INameGetter {

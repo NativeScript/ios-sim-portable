@@ -85,7 +85,25 @@ export class XCodeSimctlSimulator extends IPhoneSimulatorNameGetter implements I
 		return this.simctl.uninstall(deviceId, appIdentifier, { skipError: true });
 	}
 
+	private static startingApps: IDictionary<Promise<string>> = {};
+	private static stoppingApps: IDictionary<Promise<void>> = {};
+
 	public async startApplication(deviceId: string, appIdentifier: string, options: IOptions): Promise<string> {
+		const startingAppKey: string = deviceId + appIdentifier;
+		if (XCodeSimctlSimulator.startingApps[startingAppKey]) {
+			return XCodeSimctlSimulator.startingApps[startingAppKey];
+		}
+
+		const deferPromise = utils.deferPromise<string>();
+		XCodeSimctlSimulator.startingApps[startingAppKey] = deferPromise.promise;
+		// let the app start for 3 seconds in order to avoid a frozen simulator
+		// when the app is killed on splash screen
+		setTimeout(() => {
+			delete XCodeSimctlSimulator.startingApps[startingAppKey];
+			deferPromise.resolve();
+		}, 3000);
+
+
 		// simctl launch command does not launch the process immediately and we have to wait a little bit,
 		// just to ensure all related processes and services are alive.
 		const launchResult = await this.simctl.launch(deviceId, appIdentifier, options);
@@ -94,6 +112,18 @@ export class XCodeSimctlSimulator extends IPhoneSimulatorNameGetter implements I
 	}
 
 	public async stopApplication(deviceId: string, appIdentifier: string, bundleExecutable: string): Promise<void> {
+		const appKey: string = deviceId + appIdentifier;
+		if (XCodeSimctlSimulator.stoppingApps[appKey]) {
+			return XCodeSimctlSimulator.stoppingApps[appKey];
+		}
+
+		const deferPromise = utils.deferPromise<void>();
+		XCodeSimctlSimulator.stoppingApps[appKey] = deferPromise.promise;
+
+		if (XCodeSimctlSimulator.startingApps[appKey]) {
+			await XCodeSimctlSimulator.startingApps[appKey];
+		}
+
 		try {
 			let pid = this.getPid(deviceId, bundleExecutable);
 			while (pid) {
@@ -108,6 +138,11 @@ export class XCodeSimctlSimulator extends IPhoneSimulatorNameGetter implements I
 
 		await this.simctl.terminate(deviceId, appIdentifier);
 		utils.sleep(0.5);
+		
+		delete XCodeSimctlSimulator.stoppingApps[appKey];
+		deferPromise.resolve();
+
+		return deferPromise.promise;
 	}
 
 	private getPid(deviceId: string, bundleExecutable: string): string {
