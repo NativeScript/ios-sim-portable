@@ -17,6 +17,13 @@ export function getInstalledApplications(deviceId: string): IApplication[] {
 	if (!fs.existsSync(rootApplicationsPath)) {
 		rootApplicationsPath = path.join(osenv.home(), `/Library/Developer/CoreSimulator/Devices/${deviceId}/data/Applications`);
 	}
+
+	// since ios 14 - the Applications folder is not created on a fresh simulator, so if it doesn't exist
+	// we know there are no applications installed.
+	if(!fs.existsSync(rootApplicationsPath)) {
+		return []
+	}
+
 	let applicationGuids = fs.readdirSync(rootApplicationsPath);
 	let result: IApplication[] = [];
 	_.each(applicationGuids, applicationGuid => {
