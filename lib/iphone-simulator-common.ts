@@ -46,9 +46,9 @@ export function getInstalledApplications(deviceId: string): IApplication[] {
 export function startSimulator(deviceId: string): void {
 	let simulatorPath = path.resolve(xcode.getPathFromXcodeSelect(), "Applications", "Simulator.app");
 	let args = ["open", simulatorPath];
-        if (deviceId) {
-	    args.push( '--args', '-CurrentDeviceUDID', deviceId)
-        }
+	if (deviceId) {
+		args.push( '--args', '-CurrentDeviceUDID', deviceId)
+	}
 	childProcess.execSync(args.join(" "));
 }
 
