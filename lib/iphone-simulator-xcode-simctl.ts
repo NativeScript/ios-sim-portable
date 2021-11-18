@@ -276,15 +276,13 @@ export class XCodeSimctlSimulator extends IPhoneSimulatorNameGetter implements I
 			await this.verifyDevice(options.device);
 		}
 
-		device = device || await this.getDeviceToRun(options);
-
 		// In case the id is undefined, skip verification - we'll start default simulator.
 		if (device && device.id) {
 			await this.verifyDevice(device);
 		}
 
-		if (!device || !device.runtimeVersion || !device.fullId) {
-			device = await this.getDeviceToRun(options, device);
+		if (device && (!device.runtimeVersion || !device.fullId)) {
+			device = null;
 		}
 
 		if (!this.isDeviceBooted(device)) {
@@ -298,10 +296,10 @@ export class XCodeSimctlSimulator extends IPhoneSimulatorNameGetter implements I
 				}
 				this.simctl.boot(device.id);
 			} else {
-				common.startSimulator(device.id);
+				common.startSimulator(device && device.id);
 			}
 
-			common.startSimulator(device.id);
+			common.startSimulator(device && device.id);
 			// startSimulaltor doesn't always finish immediately, and the subsequent
 			// install fails since the simulator is not running.
 			// Give it some time to start before we attempt installing.
