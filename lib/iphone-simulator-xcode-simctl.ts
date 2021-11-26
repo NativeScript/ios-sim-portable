@@ -285,7 +285,7 @@ export class XCodeSimctlSimulator extends IPhoneSimulatorNameGetter implements I
 			device = null;
 		}
 
-		if (!this.isDeviceBooted(device)) {
+		if (!device || !this.isDeviceBooted(device)) {
 			const isSimulatorAppRunning = this.isSimulatorAppRunning();
 			const haveBootedDevices = this.haveBootedDevices();
 
