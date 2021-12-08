@@ -258,6 +258,10 @@ export class XCodeSimctlSimulator extends IPhoneSimulatorNameGetter implements I
 	}
 
 	private isDeviceBooted(device: IDevice): boolean {
+		if(!device) {
+			return false;
+		}
+		
 		return device.state === 'Booted';
 	}
 
@@ -287,7 +291,7 @@ export class XCodeSimctlSimulator extends IPhoneSimulatorNameGetter implements I
 
 		if (!device || !this.isDeviceBooted(device)) {
 			const isSimulatorAppRunning = this.isSimulatorAppRunning();
-			const haveBootedDevices = this.haveBootedDevices();
+			const haveBootedDevices = await this.haveBootedDevices();
 
 			if (isSimulatorAppRunning) {
 				// In case user closes simulator window but simulator app is still alive
@@ -295,8 +299,6 @@ export class XCodeSimctlSimulator extends IPhoneSimulatorNameGetter implements I
 					device = await this.getDeviceToRun(options);
 				}
 				this.simctl.boot(device.id);
-			} else {
-				common.startSimulator(device && device.id);
 			}
 
 			common.startSimulator(device && device.id);

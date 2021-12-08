@@ -43,7 +43,7 @@ export function getInstalledApplications(deviceId: string): IApplication[] {
 	return result;
 }
 
-export function startSimulator(deviceId: string): void {
+export function startSimulator(deviceId?: string): void {
 	let simulatorPath = path.resolve(xcode.getPathFromXcodeSelect(), "Applications", "Simulator.app");
 	let args = ["open", simulatorPath];
 	if (deviceId) {
