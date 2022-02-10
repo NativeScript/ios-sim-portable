@@ -134,9 +134,16 @@ export class XCodeSimctlSimulator extends IPhoneSimulatorNameGetter implements I
 				}
 			}
 		} catch (e) {
+			// ingore
 		}
 
-		await this.simctl.terminate(deviceId, appIdentifier);
+		try {
+			await this.simctl.terminate(deviceId, appIdentifier);
+		} catch (e) {
+			// sometimes simctl can fail and return a non-zero exit code
+			// in most cases we should be fine to ignore it and continue
+			// todo: find cases where this may break things down the line
+		}
 		utils.sleep(0.5);
 		
 		delete XCodeSimctlSimulator.stoppingApps[appKey];
