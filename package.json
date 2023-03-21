@@ -3,6 +3,10 @@
   "version": "4.2.5",
   "description": "",
   "main": "./lib/ios-sim.js",
+  "files": [
+    "lib/**/*.js",
+    "resources"
+  ],
   "scripts": {
     "prepack": "node prepack.js",
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -27,7 +31,6 @@
   "homepage": "https://github.com/telerik/ios-sim-portable",
   "dependencies": {
     "bplist-parser": "https://github.com/telerik/node-bplist-parser/tarball/master",
-    "colors": "~1.4.0",
     "lodash": "~4.17.15",
     "osenv": "~0.1.5",
     "plist": "3.0.1",

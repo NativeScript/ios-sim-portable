@@ -1,8 +1,5 @@
 import fs = require("fs");
 import path = require("path");
-import util = require("util");
-require("colors");
-
 import errors = require("./errors");
 import options = require("./options");
 
