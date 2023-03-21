@@ -1,6 +1,3 @@
-///<reference path="./.d.ts"/>
-"use strict";
-
 export abstract class IPhoneSimulatorNameGetter implements INameGetter {
 	private _simulatorName: string;
 

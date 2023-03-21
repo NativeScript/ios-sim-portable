@@ -1,6 +1,7 @@
 .DS_Store
 
 *.js
+*.d.ts
 !/*.js
 !bin/ios-sim-portable.js
 *.js.map

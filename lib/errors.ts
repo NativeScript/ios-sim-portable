@@ -1,6 +1,3 @@
-///<reference path="./.d.ts"/>
-"use strict";
-
 import * as util from "util";
 
 export function fail(errorMessage: string, ...args: string[]) {

@@ -1,9 +1,6 @@
-///<reference path=".././.d.ts"/>
-"use strict";
-
-import fs = require("fs");
-import path = require("path");
-import util = require("util");
+import * as fs from "fs";
+import * as path from "path";
+import * as util from "util";
 
 export class Command implements ICommand {
 	public execute(args: string[]): void {

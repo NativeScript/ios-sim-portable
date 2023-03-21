@@ -1,7 +1,3 @@
-///<reference path="./.d.ts"/>
-"use strict";
-
-
 interface IDictionary<T> {
 	[key: string]: T
 }

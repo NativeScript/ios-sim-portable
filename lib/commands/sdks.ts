@@ -1,10 +1,8 @@
-///<reference path=".././.d.ts"/>
-"use strict";
-import iphoneSimulatorLibPath = require("./../iphone-simulator");
+import { iPhoneSimulator } from "./../iphone-simulator";
 
 export class Command implements ICommand {
-	public execute(args: string[]): Promise<void> {
-		var iphoneSimulator = new iphoneSimulatorLibPath.iPhoneSimulator();
-		return iphoneSimulator.printSDKS();
-	}
+  public execute(args: string[]): Promise<void> {
+    var iphoneSimulator = new iPhoneSimulator();
+    return iphoneSimulator.printSDKS();
+  }
 }

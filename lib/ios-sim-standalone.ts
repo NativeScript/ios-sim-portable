@@ -1,4 +1,4 @@
-import commandExecutorLibPath = require("./command-executor");
+import { CommandExecutor } from "./command-executor";
 
-var commandExecutor: ICommandExecutor = new commandExecutorLibPath.CommandExecutor();
+var commandExecutor: ICommandExecutor = new CommandExecutor();
 commandExecutor.execute();

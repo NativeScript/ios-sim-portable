@@ -1,7 +1,4 @@
-///<reference path=".d.ts"/>
-"use strict";
-
-var yargs = require("yargs");
+import * as yargs from "yargs";
 import * as _ from "lodash";
 
 class OptionType {
@@ -21,7 +18,7 @@ var knownOptions: any = {
 };
 
 var parsed: any = {};
-var argv = yargs(process.argv.slice(2)).options(knownOptions).argv;
+var argv = yargs(process.argv.slice(2)).options(knownOptions).parseSync();
 
 // DO NOT REMOVE { } as when they are missing and some of the option values is false, the each stops as it thinks we have set "return false".
 _.each(_.keys(argv), optionName => {
