@@ -367,7 +367,7 @@ export class XCodeSimctlSimulator
 
       if (isSimulatorAppRunning) {
         // In case user closes simulator window but simulator app is still alive
-        if (!haveBootedDevices) {
+        if (!haveBootedDevices || !device) {
           device = await this.getDeviceToRun(options);
         }
         this.simctl.boot(device.id);
