@@ -134,6 +134,7 @@ export class Simctl implements ISimctl {
             fullId: "com.apple.CoreSimulator.SimDeviceType." + lineMatch[1],
             runtimeVersion: sdk,
             state: lineMatch[3],
+            platform: match[1],
           });
         }
       }

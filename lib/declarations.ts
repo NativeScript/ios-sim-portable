@@ -35,6 +35,7 @@ interface IDevice {
 	runtimeVersion: string;
 	state?: string;
 	rawDevice?: any; // NodObjC wrapper to device
+	platform: string;
 }
 
 interface ISkipErrorComposition {
@@ -103,4 +104,5 @@ interface IOptions {
 	sdkVersion?: string;
 	sdk?: string;
 	device?: string;
+	platform?: string;
 }
