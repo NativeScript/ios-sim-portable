@@ -233,8 +233,12 @@ export class XCodeSimctlSimulator
       if (!this.isDeviceLogOperationStarted) {
         const deviceVersion = device ? device.runtimeVersion : "";
         const majorVersion = deviceVersion.split(".")[0];
+        
+        const isVisionOS = device.platform === "visionOS";
+        const isSupportediOSVersion =
+          majorVersion && parseInt(majorVersion) >= 11;
 
-        if (majorVersion && parseInt(majorVersion) >= 11) {
+        if (isVisionOS || isSupportediOSVersion) {
           timer = setTimeout(() => {
             fulfillSafe();
           }, 3000);
