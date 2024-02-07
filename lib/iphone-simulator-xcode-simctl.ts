@@ -234,10 +234,10 @@ export class XCodeSimctlSimulator
         const deviceVersion = device ? device.runtimeVersion : "";
         const majorVersion = deviceVersion.split(".")[0];
 
-        if (majorVersion && parseInt(majorVersion) >= 11) {
+        if (majorVersion && parseInt(majorVersion) >= 11 || (device.platform === 'visionOS' && parseInt(majorVersion) >= 1)) {
           timer = setTimeout(() => {
             fulfillSafe();
-          }, 3000);
+          }, device.platform === 'visionOS' ? 10000 : 3000);
 
           // For some reason starting the process takes a lot of time. So wait for the first message on stdout and resolve the promise at this point.
           this.deviceLogChildProcess = this.simctl.getLog(deviceId, predicate);
