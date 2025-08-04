@@ -168,7 +168,7 @@ export class Simctl implements ISimctl {
     const { canExecuteXcrun, xcodeToolsError } =
       this.verifyXcodeCommandLineToolsAreInstalled();
     if (!canExecuteXcrun) {
-      if (opts.skipError) {
+      if (opts && opts.skipError) {
         return null;
       } else {
         throw xcodeToolsError;
