@@ -34,7 +34,7 @@
   "homepage": "https://github.com/telerik/ios-sim-portable",
   "dependencies": {
     "bplist-parser": "0.3.2",
-    "lodash": "4.17.21",
+    "lodash": "4.17.23",
     "plist": "3.0.6",
     "shelljs": "~0.9.2",
     "yargs": "17.7.1"
