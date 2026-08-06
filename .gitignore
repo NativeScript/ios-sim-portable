@@ -4,6 +4,7 @@
 *.d.ts
 !/*.js
 !bin/ios-sim-portable.js
+!scripts/*.js
 *.js.map
 
 lib-cov
