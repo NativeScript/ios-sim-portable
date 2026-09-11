@@ -10,7 +10,7 @@ import * as utils from "./utils";
 
 import { homedir } from "os";
 import { IPhoneSimulatorNameGetter } from "./iphone-simulator-name-getter";
-
+import * as xcode from "./xcode";
 export class XCodeSimctlSimulator
   extends IPhoneSimulatorNameGetter
   implements ISimulator
@@ -20,14 +20,19 @@ export class XCodeSimctlSimulator
   private deviceLogChildProcess: any = null;
   private isDeviceLogOperationStarted = false;
   public defaultDeviceIdentifier = "iPhone 6";
-
-  private simctl: ISimctl = null;
+  private _XCodeMajorVersion: number = 0;
+  private simctl: ISimctl;
 
   constructor() {
     super();
     this.simctl = new Simctl();
   }
-
+  public get XCodeMajorVersion() {
+    if(!this._XCodeMajorVersion){
+      this._XCodeMajorVersion = Number.parseInt(xcode.getXcodeVersionData().major);
+    }
+    return this._XCodeMajorVersion;
+  }
   public getDevices(): Promise<IDevice[]> {
     return this.simctl.getDevices();
   }
@@ -375,9 +380,18 @@ export class XCodeSimctlSimulator
           device = await this.getDeviceToRun(options);
         }
         this.simctl.boot(device.id);
-      }
+      } else {
 
-      common.startSimulator(device && device.id);
+        common.startSimulator(this.XCodeMajorVersion, device && device.id);
+
+        if(this.XCodeMajorVersion >=27 ) {
+          if (!device || !device?.id) {
+            device = await this.getDeviceToRun(options);
+          }
+          // device hub does not start a device by default
+          await this.simctl.boot(device.id);
+        }
+      }
       // startSimulaltor doesn't always finish immediately, and the subsequent
       // install fails since the simulator is not running.
       // Give it some time to start before we attempt installing.
@@ -391,11 +405,11 @@ export class XCodeSimctlSimulator
   }
 
   private isSimulatorAppRunning(): boolean {
-    const simulatorAppName = "Simulator";
+    const simulatorAppName = this.XCodeMajorVersion >= 27? ["DeviceHub"] : ["Simulator"];
 
     try {
       const output = childProcess.execSync(
-        `ps cax | grep -w ${simulatorAppName}`
+        `ps cax | grep -w ${simulatorAppName}`, {encoding:"utf-8"} 
       );
       return output.indexOf(simulatorAppName) !== -1;
     } catch (e) {

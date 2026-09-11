@@ -51,15 +51,26 @@ export function getInstalledApplications(deviceId: string): IApplication[] {
   return result;
 }
 
-export function startSimulator(deviceId?: string): void {
-  let simulatorPath = path.resolve(
-    xcode.getPathFromXcodeSelect(),
-    "Applications",
-    "Simulator.app"
-  );
-  let args = ["open", simulatorPath];
-  if (deviceId) {
-    args.push("--args", "-CurrentDeviceUDID", deviceId);
+export function startSimulator(xcodeVersion: number, deviceId?: string
+ ): void {
+  let args = ["open"];
+  if(xcodeVersion<27) {
+    let simulatorPath = path.resolve(
+      xcode.getPathFromXcodeSelect(),
+      "Applications",
+      "Simulator.app"
+    );
+    args.push(simulatorPath);
+    if (deviceId) {
+      args.push("--args", "-CurrentDeviceUDID", deviceId);
+    }
+  } else {
+    let simulatorPath = path.resolve(
+      xcode.getPathFromXcodeSelect(),"..",
+      "Applications",
+      "DeviceHub.app"
+    );
+    args.push(simulatorPath);
   }
   childProcess.execSync(args.join(" "));
 }
