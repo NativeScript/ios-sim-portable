@@ -88,7 +88,7 @@ export class Simctl implements ISimctl {
     // so, get the `-- iOS X.X --` line to find the sdk (X.X)
     // and the rest of the listing in order to later find the devices
 
-    let deviceSectionRegex = /-- (iOS|visionOS) (.+) --(\n    .+)*/gm;
+    let deviceSectionRegex = /-- (iOS|visionOS|tvOS) (.+) --(\n    .+)*/gm;
     let match = deviceSectionRegex.exec(rawDevices);
 
     let matches: any[] = [];
