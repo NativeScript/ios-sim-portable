@@ -51,28 +51,28 @@ export function getInstalledApplications(deviceId: string): IApplication[] {
   return result;
 }
 
-export function startSimulator(xcodeVersion: number, deviceId?: string
- ): void {
-  let args = ["open"];
-  if(xcodeVersion<27) {
-    let simulatorPath = path.resolve(
-      xcode.getPathFromXcodeSelect(),
-      "Applications",
-      "Simulator.app"
-    );
-    args.push(simulatorPath);
-    if (deviceId) {
-      args.push("--args", "-CurrentDeviceUDID", deviceId);
+export async function startSimulator(
+  _xcodeVersion: number,
+  deviceId?: string
+): Promise<void> {
+  const simulatorPath = path.resolve(
+    xcode.getPathFromXcodeSelect(),
+    "Applications",
+    "Simulator.app"
+  );
+  if (!fs.existsSync(simulatorPath)) {
+    if (!deviceId) {
+      throw new Error("A device identifier is required when Simulator.app is unavailable.");
     }
-  } else {
-    let simulatorPath = path.resolve(
-      xcode.getPathFromXcodeSelect(),"..",
-      "Applications",
-      "DeviceHub.app"
-    );
-    args.push(simulatorPath);
+    await childProcess.spawn("xcrun", ["simctl", "bootstatus", deviceId, "-b"]);
+    return;
   }
-  childProcess.execSync(args.join(" "));
+
+  const args = [simulatorPath];
+  if (deviceId) {
+    args.push("--args", "-CurrentDeviceUDID", deviceId);
+  }
+  await childProcess.spawn("open", args);
 }
 
 function parsePlist(fileNameOrBuffer: string | Buffer) {

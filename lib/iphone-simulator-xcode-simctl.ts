@@ -54,7 +54,7 @@ export class XCodeSimctlSimulator
   ): Promise<string> {
     const device = await this.getDeviceToRun(options);
 
-    this.startSimulator(options, device);
+    await this.startSimulator(options, device);
     if (!options.skipInstall) {
       await this.installApplication(device.id, applicationPath);
     }
@@ -371,27 +371,16 @@ export class XCodeSimctlSimulator
     }
 
     if (!device || !this.isDeviceBooted(device)) {
-      const isSimulatorAppRunning = this.isSimulatorAppRunning();
-      const haveBootedDevices = await this.haveBootedDevices();
-
-      if (isSimulatorAppRunning) {
-        // In case user closes simulator window but simulator app is still alive
-        if (!haveBootedDevices || !device) {
-          device = await this.getDeviceToRun(options);
-        }
-        this.simctl.boot(device.id);
-      } else {
-
-        common.startSimulator(this.XCodeMajorVersion, device && device.id);
-
-        if(this.XCodeMajorVersion >=27 ) {
-          if (!device || !device?.id) {
-            device = await this.getDeviceToRun(options);
-          }
-          // device hub does not start a device by default
-          await this.simctl.boot(device.id);
-        }
+      if (!device) {
+        device = await this.getDeviceToRun(options);
       }
+      if (!device) {
+        errors.fail("No available simulator device found.");
+      }
+      if (this.isSimulatorAppRunning() && !this.isDeviceBooted(device)) {
+        await this.simctl.boot(device.id);
+      }
+      await common.startSimulator(this.XCodeMajorVersion, device.id);
       // startSimulaltor doesn't always finish immediately, and the subsequent
       // install fails since the simulator is not running.
       // Give it some time to start before we attempt installing.
