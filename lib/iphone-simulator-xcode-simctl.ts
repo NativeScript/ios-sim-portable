@@ -359,8 +359,12 @@ export class XCodeSimctlSimulator
       return;
     }
 
+    // Booted before the app opens, without telling it which device to show:
+    // Simulator.app would boot that device too, and show an error dialog if
+    // simctl got there first. It shows the devices that are booted on its own.
+    await this.simctl.boot(device.id);
     if (!(await this.isSimulatorAppRunning())) {
-      await common.startSimulator(await this.getXcodeMajorVersion(), device.id);
+      await common.startSimulatorApp(await this.getXcodeMajorVersion());
     }
 
     await this.simctl.bootAndWait(device.id);

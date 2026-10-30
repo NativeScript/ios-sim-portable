@@ -55,23 +55,13 @@ export function getInstalledApplications(deviceId: string): IApplication[] {
   return result;
 }
 
-export async function startSimulator(
-  xcodeVersion: number,
-  deviceId?: string
-): Promise<void> {
+export async function startSimulatorApp(xcodeVersion: number): Promise<void> {
   const xcodePath = await xcode.getPathFromXcodeSelect();
-  if (xcodeVersion >= 27) {
-    await childProcess.spawn("open", [
-      path.resolve(xcodePath, "..", "Applications", "DeviceHub.app"),
-    ]);
-    return;
-  }
-
-  const args = [path.resolve(xcodePath, "Applications", "Simulator.app")];
-  if (deviceId) {
-    args.push("--args", "-CurrentDeviceUDID", deviceId);
-  }
-  await childProcess.spawn("open", args);
+  await childProcess.spawn("open", [
+    xcodeVersion >= 27
+      ? path.resolve(xcodePath, "..", "Applications", "DeviceHub.app")
+      : path.resolve(xcodePath, "Applications", "Simulator.app"),
+  ]);
 }
 
 function parsePlist(fileNameOrBuffer: string | Buffer) {

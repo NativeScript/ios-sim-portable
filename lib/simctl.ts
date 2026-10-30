@@ -128,6 +128,16 @@ export class Simctl implements ISimctl {
     return result;
   }
 
+  public async boot(deviceId: string): Promise<void> {
+    try {
+      await this.spawnAsync("boot", [deviceId]);
+    } catch (err) {
+      if (err.message.indexOf("current state: Booted") === -1) {
+        throw err;
+      }
+    }
+  }
+
   /**
    * Boots the device if needed, and resolves once it can install and launch apps.
    */

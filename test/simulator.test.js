@@ -25,8 +25,11 @@ function setup(devices = [], overrides = {}) {
       calls.push(`terminate ${id}`);
     },
     getAppPid: async () => null,
-    bootAndWait: async (id) => {
+    boot: async (id) => {
       calls.push(`boot ${id}`);
+    },
+    bootAndWait: async (id) => {
+      calls.push(`wait ${id}`);
     },
     notifyPost: async (id, name) => {
       calls.push(`notify ${id} ${name}`);
@@ -47,12 +50,27 @@ test("a booted device is left alone", async () => {
 test("the device named in the options is the one that boots", async () => {
   const { simulator, calls } = setup([iOS("iPhone", "A", "26.2"), iOS("iPad", "B", "26.2")]);
   await simulator.startSimulator({ device: "iPad" });
-  assert.deepStrictEqual(calls, ["boot B"]);
+  assert.deepStrictEqual(calls, ["boot B", "wait B"]);
+});
+
+test("the Simulator app opens after the boot has started", async () => {
+  const { simulator, calls } = setup([iOS("iPhone", "A", "26.2")]);
+  simulator.isSimulatorAppRunning = async () => {
+    calls.push("check app");
+    return false;
+  };
+  simulator.getXcodeMajorVersion = async () => {
+    calls.push("open app");
+    return 0;
+  };
+  require("../lib/iphone-simulator-common").startSimulatorApp = async () => {};
+  await simulator.startSimulator({ device: "A" });
+  assert.deepStrictEqual(calls, ["boot A", "check app", "open app", "wait A"]);
 });
 
 test("a boot failure reaches the caller", async () => {
   const { simulator } = setup([iOS("iPhone", "A", "26.2")], {
-    bootAndWait: async () => {
+    boot: async () => {
       throw new Error("boot failed");
     },
   });
@@ -73,7 +91,7 @@ test("the default is the iPhone on the newest runtime", async () => {
     { ...iOS("Apple TV", "T", "99.0"), platform: "tvOS" },
   ]);
   await simulator.startSimulator({});
-  assert.deepStrictEqual(calls, ["boot N"]);
+  assert.deepStrictEqual(calls, ["boot N", "wait N"]);
 });
 
 test("a booted device is preferred over the default", async () => {
