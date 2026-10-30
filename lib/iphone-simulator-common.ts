@@ -35,6 +35,10 @@ export function getInstalledApplications(deviceId: string): IApplication[] {
         applicationDirContents,
         (fileName) => path.extname(fileName) === ".app"
       );
+      // Left behind by an install that didn't finish.
+      if (!applicationName) {
+        return;
+      }
       let plistFilePath = path.join(
         fullApplicationPath,
         applicationName,
@@ -51,28 +55,13 @@ export function getInstalledApplications(deviceId: string): IApplication[] {
   return result;
 }
 
-export function startSimulator(xcodeVersion: number, deviceId?: string
- ): void {
-  let args = ["open"];
-  if(xcodeVersion<27) {
-    let simulatorPath = path.resolve(
-      xcode.getPathFromXcodeSelect(),
-      "Applications",
-      "Simulator.app"
-    );
-    args.push(simulatorPath);
-    if (deviceId) {
-      args.push("--args", "-CurrentDeviceUDID", deviceId);
-    }
-  } else {
-    let simulatorPath = path.resolve(
-      xcode.getPathFromXcodeSelect(),"..",
-      "Applications",
-      "DeviceHub.app"
-    );
-    args.push(simulatorPath);
-  }
-  childProcess.execSync(args.join(" "));
+export async function startSimulatorApp(xcodeVersion: number): Promise<void> {
+  const xcodePath = await xcode.getPathFromXcodeSelect();
+  await childProcess.spawn("open", [
+    xcodeVersion >= 27
+      ? path.resolve(xcodePath, "..", "Applications", "DeviceHub.app")
+      : path.resolve(xcodePath, "Applications", "Simulator.app"),
+  ]);
 }
 
 function parsePlist(fileNameOrBuffer: string | Buffer) {
