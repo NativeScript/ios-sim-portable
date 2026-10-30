@@ -2,7 +2,7 @@ import * as child_process from "child_process";
 import * as _ from "lodash";
 import * as childProcess from "./child-process";
 import * as errors from "./errors";
-import { Simctl } from "./simctl";
+import { compareVersions, Simctl } from "./simctl";
 
 import * as path from "path";
 import * as common from "./iphone-simulator-common";
@@ -20,19 +20,16 @@ export class XCodeSimctlSimulator
   private deviceLogChildProcess: any = null;
   private isDeviceLogOperationStarted = false;
   public defaultDeviceIdentifier = "iPhone 6";
-  private _XCodeMajorVersion: number = 0;
   private simctl: ISimctl;
 
   constructor() {
     super();
     this.simctl = new Simctl();
   }
-  public get XCodeMajorVersion() {
-    if(!this._XCodeMajorVersion){
-      this._XCodeMajorVersion = Number.parseInt(xcode.getXcodeVersionData().major);
-    }
-    return this._XCodeMajorVersion;
+  private async getXcodeMajorVersion(): Promise<number> {
+    return Number.parseInt((await xcode.getXcodeVersionData()).major);
   }
+
   public getDevices(): Promise<IDevice[]> {
     return this.simctl.getDevices();
   }
@@ -54,7 +51,7 @@ export class XCodeSimctlSimulator
   ): Promise<string> {
     const device = await this.getDeviceToRun(options);
 
-    this.startSimulator(options, device);
+    await this.startSimulator(options, device);
     if (!options.skipInstall) {
       await this.installApplication(device.id, applicationPath);
     }
@@ -66,12 +63,6 @@ export class XCodeSimctlSimulator
     notification: string,
     deviceId: string
   ): Promise<void> {
-    let device = this.getDeviceFromIdentifier(deviceId);
-
-    if (!device) {
-      errors.fail("Could not find device.");
-    }
-
     return this.simctl.notifyPost(deviceId, notification);
   }
 
@@ -104,99 +95,91 @@ export class XCodeSimctlSimulator
     return this.simctl.uninstall(deviceId, appIdentifier, { skipError: true });
   }
 
-  private static startingApps: IDictionary<Promise<string>> = {};
+  // The app gets this long to start, in order to avoid a frozen simulator when
+  // it is killed on the splash screen. Debug sessions also ask to start an app
+  // that was launched just before, which must not launch it again.
+  private static APP_START_MILLISECONDS = 3000;
+  private static startingApps: IDictionary<{
+    launch: Promise<string>;
+    startedAt: number;
+  }> = {};
   private static stoppingApps: IDictionary<Promise<void>> = {};
 
-  public async startApplication(
+  public startApplication(
     deviceId: string,
     appIdentifier: string,
     options: IOptions
   ): Promise<string> {
-    const startingAppKey: string = deviceId + appIdentifier;
-    if (XCodeSimctlSimulator.startingApps[startingAppKey]) {
-      return XCodeSimctlSimulator.startingApps[startingAppKey];
+    const appKey = deviceId + appIdentifier;
+    const starting = XCodeSimctlSimulator.startingApps[appKey];
+    if (
+      starting &&
+      Date.now() - starting.startedAt < XCodeSimctlSimulator.APP_START_MILLISECONDS
+    ) {
+      return starting.launch;
     }
 
-    const deferPromise = utils.deferPromise<string>();
-    XCodeSimctlSimulator.startingApps[startingAppKey] = deferPromise.promise;
-    // let the app start for 3 seconds in order to avoid a frozen simulator
-    // when the app is killed on splash screen
-    setTimeout(() => {
-      delete XCodeSimctlSimulator.startingApps[startingAppKey];
-      deferPromise.resolve();
-    }, 3000);
+    const launch = this.simctl.launch(deviceId, appIdentifier, options);
+    const entry = { launch, startedAt: Date.now() };
+    XCodeSimctlSimulator.startingApps[appKey] = entry;
+    launch.catch(() => {
+      if (XCodeSimctlSimulator.startingApps[appKey] === entry) {
+        delete XCodeSimctlSimulator.startingApps[appKey];
+      }
+    });
 
-    // simctl launch command does not launch the process immediately and we have to wait a little bit,
-    // just to ensure all related processes and services are alive.
-    const launchResult = await this.simctl.launch(
-      deviceId,
-      appIdentifier,
-      options
-    );
-    utils.sleep(0.5);
-    return launchResult;
+    return launch;
   }
 
-  public async stopApplication(
+  public stopApplication(
     deviceId: string,
     appIdentifier: string,
-    bundleExecutable: string
+    bundleExecutable?: string
   ): Promise<void> {
-    const appKey: string = deviceId + appIdentifier;
-    if (XCodeSimctlSimulator.stoppingApps[appKey]) {
-      return XCodeSimctlSimulator.stoppingApps[appKey];
+    const appKey = deviceId + appIdentifier;
+    if (!XCodeSimctlSimulator.stoppingApps[appKey]) {
+      XCodeSimctlSimulator.stoppingApps[appKey] = this.stopApp(
+        deviceId,
+        appIdentifier
+      ).finally(() => {
+        delete XCodeSimctlSimulator.stoppingApps[appKey];
+      });
     }
 
-    const deferPromise = utils.deferPromise<void>();
-    XCodeSimctlSimulator.stoppingApps[appKey] = deferPromise.promise;
+    return XCodeSimctlSimulator.stoppingApps[appKey];
+  }
 
-    if (XCodeSimctlSimulator.startingApps[appKey]) {
-      await XCodeSimctlSimulator.startingApps[appKey];
-    }
-
-    try {
-      let pid = this.getPid(deviceId, bundleExecutable);
-      while (pid) {
-        childProcess.execSync(`kill -9 ${pid}`, null, { skipError: true });
-        pid = this.getPid(deviceId, bundleExecutable);
-        if (pid) {
-          utils.sleep(0.1);
-        }
+  private async stopApp(deviceId: string, appIdentifier: string): Promise<void> {
+    const appKey = deviceId + appIdentifier;
+    const starting = XCodeSimctlSimulator.startingApps[appKey];
+    if (starting) {
+      const remaining =
+        XCodeSimctlSimulator.APP_START_MILLISECONDS -
+        (Date.now() - starting.startedAt);
+      if (remaining > 0) {
+        await utils.delay(remaining);
       }
-    } catch (e) {
-      // ingore
+      delete XCodeSimctlSimulator.startingApps[appKey];
     }
 
     try {
       await this.simctl.terminate(deviceId, appIdentifier);
-    } catch (e) {
-      // sometimes simctl can fail and return a non-zero exit code
-      // in most cases we should be fine to ignore it and continue
-      // todo: find cases where this may break things down the line
+    } catch (err) {
+      if (err.message.indexOf("found nothing to terminate") === -1) {
+        await this.killApp(deviceId, appIdentifier);
+      }
     }
-    utils.sleep(0.5);
-
-    delete XCodeSimctlSimulator.stoppingApps[appKey];
-    deferPromise.resolve();
-
-    return deferPromise.promise;
   }
 
-  private getPid(deviceId: string, bundleExecutable: string): string {
-    // Sample output of the command  ps -ef | grep app3grep | grep /86DCBE59-7ED0-447D-832B-A397322BD712/
-    // 1203284766 59345 51524   0  7:11pm ??         0:01.32 /Users/username/Library/Developer/CoreSimulator/Devices/86DCBE59-7ED0-447D-832B-A397322BD712/data/Containers/Bundle/Application/4E79A7E8-9AAB-40B9-89EF-C8D7B91B819E/app3grep.app/app3grep
-    // 1203284766 59486 59396   0  7:15pm ??         0:00.01 /bin/sh -c ps -ef | grep app3grep | grep /86DCBE59-7ED0-447D-832B-A397322BD712/
-    // The process, that is execed by Node.js is also returned, so we need to exclude it from the result.
-    // To achieve this, remove the command we've executed from the ps result.
-    const grepAppProcessCommand = `ps -ef | grep ${bundleExecutable} | grep \/${deviceId}\/`;
-    return childProcess
-      .execSync(
-        `${grepAppProcessCommand} | grep -v "${grepAppProcessCommand}" | awk '{print $2}'`,
-        null,
-        { skipError: true }
-      )
-      .toString()
-      .trim();
+  private async killApp(deviceId: string, appIdentifier: string): Promise<void> {
+    try {
+      const pid = await this.simctl.getAppPid(deviceId, appIdentifier);
+      if (pid) {
+        process.kill(pid, "SIGKILL");
+      }
+    } catch (err) {
+      // The simulator may be gone, in which case the app is too.
+    }
   }
 
   public async getDeviceLogProcess(
@@ -239,7 +222,7 @@ export class XCodeSimctlSimulator
         const deviceVersion = device ? device.runtimeVersion : "";
         const majorVersion = deviceVersion.split(".")[0];
         
-        const isVisionOS = device.platform === "visionOS";
+        const isVisionOS = device && device.platform === "visionOS";
         const isSupportediOSVersion =
           majorVersion && parseInt(majorVersion) >= 11;
 
@@ -285,10 +268,7 @@ export class XCodeSimctlSimulator
     options: IOptions,
     device?: any
   ): Promise<IDevice> {
-    let devices = _.sortBy(
-        await this.simctl.getDevices(),
-        (device) => device.runtimeVersion
-      ),
+    let devices = await this.simctl.getDevices(),
       sdkVersion = options.sdkVersion || options.sdk,
       deviceIdOrName = options.device;
 
@@ -321,18 +301,23 @@ export class XCodeSimctlSimulator
       }
     });
 
-    if (!result) {
-      result = _.find(
-        devices,
-        (device: IDevice) => device.name === this.defaultDeviceIdentifier
+    return result || this.getDefaultDevice(devices);
+  }
+
+  private getDefaultDevice(devices: IDevice[]): IDevice {
+    const newest = (candidates: IDevice[]) =>
+      _.last(
+        [...candidates].sort((a, b) =>
+          compareVersions(a.runtimeVersion, b.runtimeVersion)
+        )
       );
-    }
+    const iOS = devices.filter((device) => device.platform === "iOS");
 
-    if (!result) {
-      result = _.last(devices);
-    }
-
-    return result;
+    return (
+      newest(iOS.filter((device) => device.name.startsWith("iPhone"))) ||
+      newest(iOS) ||
+      newest(devices)
+    );
   }
 
   private isDeviceBooted(device: IDevice): boolean {
@@ -366,53 +351,28 @@ export class XCodeSimctlSimulator
       await this.verifyDevice(device);
     }
 
-    if (device && (!device.runtimeVersion || !device.fullId)) {
-      device = null;
+    if (!device || !device.runtimeVersion || !device.fullId) {
+      device = await this.getDeviceToRun(options);
     }
 
-    if (!device || !this.isDeviceBooted(device)) {
-      const isSimulatorAppRunning = this.isSimulatorAppRunning();
-      const haveBootedDevices = await this.haveBootedDevices();
-
-      if (isSimulatorAppRunning) {
-        // In case user closes simulator window but simulator app is still alive
-        if (!haveBootedDevices || !device) {
-          device = await this.getDeviceToRun(options);
-        }
-        this.simctl.boot(device.id);
-      } else {
-
-        common.startSimulator(this.XCodeMajorVersion, device && device.id);
-
-        if(this.XCodeMajorVersion >=27 ) {
-          if (!device || !device?.id) {
-            device = await this.getDeviceToRun(options);
-          }
-          // device hub does not start a device by default
-          await this.simctl.boot(device.id);
-        }
-      }
-      // startSimulaltor doesn't always finish immediately, and the subsequent
-      // install fails since the simulator is not running.
-      // Give it some time to start before we attempt installing.
-      utils.sleep(1);
+    if (this.isDeviceBooted(device)) {
+      return;
     }
+
+    if (!(await this.isSimulatorAppRunning())) {
+      await common.startSimulator(await this.getXcodeMajorVersion(), device.id);
+    }
+
+    await this.simctl.bootAndWait(device.id);
   }
 
-  private async haveBootedDevices(): Promise<boolean> {
-    const bootedDevices = await this.getBootedDevices();
-    return bootedDevices && bootedDevices.length > 0;
-  }
-
-  private isSimulatorAppRunning(): boolean {
-    const simulatorAppName = this.XCodeMajorVersion >= 27? ["DeviceHub"] : ["Simulator"];
+  private async isSimulatorAppRunning(): Promise<boolean> {
+    const appName = (await this.getXcodeMajorVersion()) >= 27 ? "DeviceHub" : "Simulator";
 
     try {
-      const output = childProcess.execSync(
-        `ps cax | grep -w ${simulatorAppName}`, {encoding:"utf-8"} 
-      );
-      return output.indexOf(simulatorAppName) !== -1;
-    } catch (e) {
+      await childProcess.spawn("pgrep", ["-x", appName]);
+      return true;
+    } catch (err) {
       return false;
     }
   }
