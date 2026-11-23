@@ -1,4 +1,5 @@
 import * as _ from "lodash";
+import { delay } from "./utils";
 
 function getSimulator(): ISimulator {
 	let libraryPath = require("./iphone-simulator");
@@ -10,39 +11,19 @@ const publicApi = {};
 
 Object.defineProperty(publicApi, "getRunningSimulator", {
 	get: () => {
-		return (...args: any[]) => {
-			let isResolved = false;
+		return async (...args: any[]) => {
+			const libraryPath = require("./iphone-simulator-xcode-simctl");
+			const simulator = new libraryPath.XCodeSimctlSimulator();
 
-			return new Promise<any>((resolve, reject) => {
-				let libraryPath = require("./iphone-simulator-xcode-simctl");
-				let simulator = new libraryPath.XCodeSimctlSimulator();
-
-				const tryGetBootedDevice = () => {
-					try {
-						return simulator.getBootedDevice.apply(simulator, args);
-					} catch (err) {
-						if (!isResolved) {
-							isResolved  = true;
-							reject(err);
-						}
-					}
+			for (let attempt = 0; attempt < 30; attempt++) {
+				const device = await simulator.getBootedDevice(...args);
+				if (device) {
+					return device;
 				}
+				await delay(500);
+			}
 
-				let result = tryGetBootedDevice();
-
-				if (!isResolved && !result) {
-					let repeatCount = 30;
-					let timer = setInterval(() => {
-						result = tryGetBootedDevice();
-						if ((result || !repeatCount) && !isResolved) {
-							isResolved = true;
-							clearInterval(timer);
-							resolve(result);
-						}
-						repeatCount--;
-					}, 500);
-				}
-			});
+			return simulator.getBootedDevice(...args);
 		}
 	}
 });
@@ -50,40 +31,9 @@ Object.defineProperty(publicApi, "getRunningSimulator", {
 Object.defineProperty(publicApi, "getRunningSimulators", {
 	get: () => {
 		return (...args: any[]) => {
-			let isResolved = false;
-
-			return new Promise<any>(async (resolve, reject) => {
-				const libraryPath = require("./iphone-simulator-xcode-simctl");
-				const simulator = new libraryPath.XCodeSimctlSimulator();
-				
-				const tryGetBootedDevices = async () => {
-					try {
-						return await simulator.getBootedDevices.apply(simulator, args);
-					} catch (err) {
-						if (!isResolved) {
-							isResolved = true;
-							reject(err);
-						}
-					}
-				}
-
-				let result = await tryGetBootedDevices();
-				if (result && result.length) {
-					isResolved = true;
-					resolve(result);
-					return;
-				}
-
-				if (!isResolved && (!result || !result.length)) {
-					const timer = setTimeout(async () => {
-						result = await tryGetBootedDevices();
-						if (!isResolved) {
-							isResolved = true;
-							resolve(result);
-						}
-					}, 500);
-				}
-			});
+			const libraryPath = require("./iphone-simulator-xcode-simctl");
+			const simulator = new libraryPath.XCodeSimctlSimulator();
+			return simulator.getBootedDevices(...args);
 		}
 	}
 });

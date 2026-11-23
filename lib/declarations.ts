@@ -45,6 +45,8 @@ interface ISkipErrorComposition {
 interface ISimctl {
 	launch(deviceId: string, applicationIdentifier: string, options: IOptions): Promise<string>;
 	boot(deviceId: string): Promise<void>;
+	bootAndWait(deviceId: string): Promise<void>;
+	getAppPid(deviceId: string, appIdentifier: string): Promise<number | null>;
 	terminate(deviceId: string, appIdentifier: string): Promise<string>;
 	install(deviceId: string, applicationPath: string): Promise<void>;
 	uninstall(deviceId: string, applicationIdentifier: string, opts?: ISkipErrorComposition): Promise<void>;

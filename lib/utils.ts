@@ -1,5 +1,3 @@
-import * as childProcess from "./child-process";
-
 export function stringify(arr: string[], delimiter?: string): string {
 	delimiter = delimiter || ", ";
 	return arr.join(delimiter);
@@ -10,8 +8,8 @@ export function getCurrentEpochTime(): number {
 	return dateTime.getTime();
 }
 
-export function sleep(seconds: number): void {
-	childProcess.execSync(`sleep ${seconds}`);
+export function delay(milliseconds: number): Promise<void> {
+	return new Promise((resolve) => setTimeout(resolve, milliseconds));
 }
 
 export function deferPromise<T>(): IDeferPromise<T> {

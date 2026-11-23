@@ -2,7 +2,103 @@ import * as child_process from "child_process";
 import * as fs from "fs";
 import * as _ from "lodash";
 import * as childProcess from "./child-process";
-import * as errors from "./errors";
+
+const SUPPORTED_PLATFORMS = ["iOS", "tvOS", "visionOS"];
+
+let xcodeToolsCheck: Promise<Error | null>;
+
+function getXcodeToolsError(): Promise<Error | null> {
+  if (!xcodeToolsCheck) {
+    xcodeToolsCheck = childProcess
+      .spawn("xcode-select", ["-p"])
+      .then((path) =>
+        path
+          ? null
+          : new Error(
+              "Unable to work with iOS Simulator as Xcode Command Line Tools cannot be found."
+            )
+      )
+      .catch((err) => err);
+  }
+
+  return xcodeToolsCheck;
+}
+
+// Runtime keys look like com.apple.CoreSimulator.SimRuntime.iOS-26-2. visionOS
+// runtimes are named xrOS there.
+function parseRuntime(
+  runtime: string
+): { platform: string; version: string } | null {
+  const match = /(?:^|\.)([A-Za-z]+)[- ]([\d.-]+)$/.exec(runtime);
+  if (!match) {
+    return null;
+  }
+
+  const platform = match[1] === "xrOS" ? "visionOS" : match[1];
+  return SUPPORTED_PLATFORMS.includes(platform)
+    ? { platform, version: match[2].replace(/-/g, ".") }
+    : null;
+}
+
+export function compareVersions(a: string, b: string): number {
+  const left = a.split(".").map(Number);
+  const right = b.split(".").map(Number);
+  for (let i = 0; i < Math.max(left.length, right.length); i++) {
+    const difference = (left[i] || 0) - (right[i] || 0);
+    if (difference) {
+      return difference;
+    }
+  }
+
+  return 0;
+}
+
+export function parseDevices(simctlJson: string): IDevice[] {
+  const runtimes: { [runtime: string]: any[] } =
+    JSON.parse(simctlJson).devices || {};
+
+  return Object.keys(runtimes)
+    .map((key) => ({ runtime: parseRuntime(key), devices: runtimes[key] }))
+    .filter(({ runtime }) => runtime)
+    .sort(
+      (a, b) =>
+        SUPPORTED_PLATFORMS.indexOf(a.runtime.platform) -
+          SUPPORTED_PLATFORMS.indexOf(b.runtime.platform) ||
+        compareVersions(a.runtime.version, b.runtime.version)
+    )
+    .reduce<IDevice[]>(
+      (result, { runtime, devices }) =>
+        result.concat(
+          devices
+            .filter((device) => device.isAvailable !== false)
+            .map((device) => ({
+              name: device.name,
+              id: device.udid,
+              fullId: "com.apple.CoreSimulator.SimDeviceType." + device.name,
+              runtimeVersion: runtime.version,
+              state: device.state,
+              platform: runtime.platform,
+            }))
+        ),
+      []
+    );
+}
+
+// launchctl list prints "<pid or ->\t<status>\tUIKitApplication:<bundle id>[...]".
+export function parseAppPid(
+  launchctlList: string,
+  appIdentifier: string
+): number | null {
+  const label = `UIKitApplication:${appIdentifier}[`;
+  for (const line of (launchctlList || "").split("\n")) {
+    const [pid, , service] = line.split("\t");
+    if (service && service.startsWith(label) && /^\d+$/.test(pid)) {
+      return Number(pid);
+    }
+  }
+
+  return null;
+}
 
 export class Simctl implements ISimctl {
   public async launch(
@@ -13,7 +109,7 @@ export class Simctl implements ISimctl {
     options = options || {};
     let args: string[] = [];
     if (options.waitForDebugger) {
-      args.push("-w");
+      args.push("--wait-for-debugger");
     }
 
     args = args.concat([deviceId, appIdentifier]);
@@ -32,12 +128,37 @@ export class Simctl implements ISimctl {
     return result;
   }
 
-  public boot(deviceId: string): Promise<void> {
-    return this.spawnAsync("boot", [deviceId]);
+  public async boot(deviceId: string): Promise<void> {
+    try {
+      await this.spawnAsync("boot", [deviceId]);
+    } catch (err) {
+      if (err.message.indexOf("current state: Booted") === -1) {
+        throw err;
+      }
+    }
+  }
+
+  /**
+   * Boots the device if needed, and resolves once it can install and launch apps.
+   */
+  public bootAndWait(deviceId: string): Promise<void> {
+    return this.spawnAsync("bootstatus", [deviceId, "-b"]);
   }
 
   public terminate(deviceId: string, appIdentifier: string): Promise<string> {
     return this.spawnAsync("terminate", [deviceId, appIdentifier]);
+  }
+
+  public async getAppPid(
+    deviceId: string,
+    appIdentifier: string
+  ): Promise<number | null> {
+    const output: string = await this.spawnAsync("spawn", [
+      deviceId,
+      "launchctl",
+      "list",
+    ]);
+    return parseAppPid(output, appIdentifier);
   }
 
   public install(deviceId: string, applicationPath: string): Promise<void> {
@@ -76,71 +197,8 @@ export class Simctl implements ISimctl {
   }
 
   public async getDevices(): Promise<IDevice[]> {
-    let rawDevices = await this.spawnAsync("list", ["devices"]);
-
-    // expect to get a listing like
-    // -- iOS 8.1 --
-    //     iPhone 4s (3CA6E7DD-220E-45E5-B716-1E992B3A429C) (Shutdown)
-    //     ...
-    // -- iOS 8.2 --
-    //     iPhone 4s (A99FFFC3-8E19-4DCF-B585-7D9D46B4C16E) (Shutdown)
-    //     ...
-    // so, get the `-- iOS X.X --` line to find the sdk (X.X)
-    // and the rest of the listing in order to later find the devices
-
-    let deviceSectionRegex = /-- (iOS|visionOS|tvOS) (.+) --(\n    .+)*/gm;
-    let match = deviceSectionRegex.exec(rawDevices);
-
-    let matches: any[] = [];
-
-    // make an entry for each sdk version
-    while (match !== null) {
-      matches.push(match);
-      match = deviceSectionRegex.exec(rawDevices);
-    }
-
-    if (matches.length < 1) {
-      errors.fail("Could not find device section. " + match);
-    }
-
-    // get all the devices for each sdk
-    let devices: IDevice[] = [];
-    for (match of matches) {
-      let sdk: string = match[2];
-
-      // split the full match into lines and remove the first
-      for (let line of match[0].split("\n").slice(1)) {
-        // a line is something like
-        //    iPhone 4s (A99FFFC3-8E19-4DCF-B585-7D9D46B4C16E) (Shutdown)
-        //    iPad Air 2 (9696A8ED-3020-49FC-90D6-DAFD29A0EA8D) (Shutdown)
-        //    iPad Pro (9.7 inch) (7FF984D4-0755-432D-BE0E-6EB44F0489CB) (Shutdown)
-        //    iPad Pro (12.9 inch) (F02012C8-6D4D-46FF-90D7-5DF90EF579E8) (Booted)
-        // retrieve:
-        //   iPhone 4s
-        //   A99FFFC3-8E19-4DCF-B585-7D9D46B4C16E
-        //   Shutdown
-        let lineRegex =
-          /^\s+(.*?)\s+\(([0-9A-F]{8}(?:-[0-9A-F]{4}){3}-[0-9A-F]{12})\)\s+\((.*?)\)(\s+\((?:.*?)\))?/;
-        let lineMatch = lineRegex.exec(line);
-        if (lineMatch === null) {
-          errors.fail("Could not match line. " + line);
-        }
-
-        let available = lineMatch[4];
-        if (available === null || available === undefined) {
-          devices.push({
-            name: lineMatch[1],
-            id: lineMatch[2],
-            fullId: "com.apple.CoreSimulator.SimDeviceType." + lineMatch[1],
-            runtimeVersion: sdk,
-            state: lineMatch[3],
-            platform: match[1],
-          });
-        }
-      }
-    }
-
-    return devices;
+    const output = await this.spawnAsync("list", ["devices", "--json"]);
+    return parseDevices(output);
   }
 
   public getLog(
@@ -165,14 +223,12 @@ export class Simctl implements ISimctl {
     spawnOpts?: child_process.SpawnOptions,
     opts?: ISkipErrorComposition
   ): Promise<any> {
-    const { canExecuteXcrun, xcodeToolsError } =
-      this.verifyXcodeCommandLineToolsAreInstalled();
-    if (!canExecuteXcrun) {
+    const xcodeToolsError = await getXcodeToolsError();
+    if (xcodeToolsError) {
       if (opts && opts.skipError) {
         return null;
-      } else {
-        throw xcodeToolsError;
       }
+      throw xcodeToolsError;
     }
 
     return childProcess.spawn(
@@ -181,30 +237,6 @@ export class Simctl implements ISimctl {
       spawnOpts,
       opts
     );
-  }
-
-  private verifyXcodeCommandLineToolsAreInstalled(): {
-    canExecuteXcrun: boolean;
-    xcodeToolsError: Error;
-  } {
-    let canExecuteXcrun = false;
-    let xcodeToolsError: Error = null;
-
-    try {
-      const result = childProcess.execSync("xcode-select -p", {
-        stdio: "pipe",
-      });
-      canExecuteXcrun = !!(result && result.toString().trim());
-      if (!canExecuteXcrun) {
-        xcodeToolsError = new Error(
-          "Unable to work with iOS Simulator as Xcode Command Line Tools cannot be found."
-        );
-      }
-    } catch (err) {
-      xcodeToolsError = err;
-    }
-
-    return { canExecuteXcrun, xcodeToolsError };
   }
 
   private simctlSpawn(

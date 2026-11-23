@@ -1,16 +1,25 @@
-import * as childProcess from "child_process";
+import * as childProcess from "./child-process";
 
-export function getPathFromXcodeSelect(): string {
-  return childProcess.execSync("xcode-select -print-path").toString().trim();
+export function getPathFromXcodeSelect(): Promise<string> {
+  return childProcess.spawn("xcode-select", ["-print-path"]);
 }
 
-export function getXcodeVersionData(): IXcodeVersionData {
-  let rawData = childProcess.execSync("xcodebuild -version");
-  let lines = rawData.toString().split("\n");
-  let parts = lines[0].split(" ")[1].split(".");
-  return {
-    major: parts[0],
-    minor: parts[1],
-    build: lines[1].split("Build version ")[1],
-  };
+let versionData: Promise<IXcodeVersionData>;
+
+export function getXcodeVersionData(): Promise<IXcodeVersionData> {
+  if (!versionData) {
+    versionData = childProcess
+      .spawn("xcodebuild", ["-version"])
+      .then((output) => {
+        const lines = output.split("\n");
+        const parts = lines[0].split(" ")[1].split(".");
+        return {
+          major: parts[0],
+          minor: parts[1],
+          build: lines[1].split("Build version ")[1],
+        };
+      });
+  }
+
+  return versionData;
 }
